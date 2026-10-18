@@ -38,13 +38,10 @@
           showAllFiles: false, // 文件树过滤：默认只列受支持格式（markdown/image/text），true 时显示目录内全部文件
           toolbarCollapsed: false,
           sidebarHidden: false,
-          // 文件面板高度占比（0~1），分屏改造后用于还原上下比例
-          filesPanelRatio: 0.5,
+          // 侧栏标签页：'outline'=大纲（默认），'files'=文件夹
+          sidebarTab: 'outline',
           // 大纲层级过滤：0=全部，1~6=仅显示到该层级
           outlineFilterLevel: 0,
-          // 面板整体折叠：文件/大纲任一收起时，对侧占满剩余高度
-          filesCollapsed: false,
-          outlineCollapsed: false,
           customFonts: [],
           editorFont: '',
           previewFont: '',

@@ -71,27 +71,16 @@
           }
           this.updateSidebarChecks();
           this.updateSideButtons();
-          this.applySplitterRatio();
-          this.applyPanelCollapse();
+          this.applySidebarTab();
         },
       updateSidebarChecks() {
         // 原「视图 → 侧边栏」菜单已移除，勾选同步不再需要；保留钩子供未来菜单项复用。
       },
       initPanelHeaders() {
-        const filesChevron = document.getElementById('files-chevron');
-        const outlineChevron = document.getElementById('outline-chevron');
         const btnAllFolders = document.getElementById('btn-all-folders');
         const btnAllOutline = document.getElementById('btn-all-outline');
-        if (filesChevron) {
-          filesChevron.addEventListener('click', () => this.togglePanel('files'));
-        }
-        if (outlineChevron) {
-          outlineChevron.addEventListener('click', () => this.togglePanel('outline'));
-        }
         // 文件面板标题（左侧图标+文字）点击 = 弹出文件夹选择，选中后切换工作区
-        // （无论当前是否已打开工作区都弹选择）；折叠面板仍由 files-chevron 承担。
         const filesHeader = document.querySelector('.files-panel-header .panel-title-group');
-        const outlineHeader = document.querySelector('.outline-panel-header .panel-title-group');
         const folderPathEl = document.getElementById('folder-path');
         if (filesHeader) {
           filesHeader.addEventListener('click', async () => {
@@ -112,10 +101,6 @@
           folderUpEl.addEventListener('click', async () => {
             await this.goToParentWorkspace();
           });
-        }
-        // 大纲面板标题（左侧图标+文字）点击等效于点击折叠按钮
-        if (outlineHeader) {
-          outlineHeader.addEventListener('click', () => this.togglePanel('outline'));
         }
         if (btnAllFolders) {
           btnAllFolders.addEventListener('click', () => {
@@ -180,146 +165,40 @@
       updateOutlineCheck() {
         this.updateSidebarChecks();
       },
-      // 水平分隔条：调整「文件面板 / 大纲面板」上下高度比例。
-      // 仿 initOutlineResizer，但改用 clientY + offsetHeight，并写入 settings.filesPanelRatio。
-      initSplitter() {
-        const resizer = document.getElementById('sidebar-h-resizer');
-        const filesPanel = document.getElementById('folder-content');
-        const outlinePanel = document.getElementById('outline-content');
-        const sidebar = document.getElementById('outline-sidebar');
-        if (!resizer || !filesPanel || !outlinePanel || !sidebar) return;
-  
-        const MIN = 120;
-  
-        // 两面板实际可分配高度 = 侧栏总高 − 固定 chrome（分隔条 + 大纲标题栏）。
-        // 鼠标对齐的关键：两个面板 flex-basis 之和必须等于该可用高度，否则 flex 引擎会按比例
-        // 压缩，导致分隔线移动量被缩放、与鼠标脱节。
-        const chromeH = () => {
-          let h = resizer.offsetHeight || 4;
-          const oh = sidebar.querySelector('.outline-panel-header');
-          if (oh) h += oh.offsetHeight;
-          return h;
-        };
-        const availH = () => Math.max(0, sidebar.offsetHeight - chromeH());
-  
-        let isResizing = false;
-        let startY = 0;
-        let startFilesH = 0;
-  
-        resizer.addEventListener('mousedown', (e) => {
-          e.preventDefault();
-          isResizing = true;
-          startY = e.clientY;
-          startFilesH = filesPanel.offsetHeight;
-          document.body.classList.add('is-resizing-row');
-        });
-  
-        document.addEventListener('mousemove', (e) => {
-          if (!isResizing) return;
-          const avail = availH();
-          const delta = e.clientY - startY;
-          const newH = Math.max(MIN, Math.min(avail - MIN, startFilesH + delta));
-          filesPanel.style.flexBasis = newH + 'px';
-          outlinePanel.style.flexBasis = (avail - newH) + 'px';
-        });
-  
-        document.addEventListener('mouseup', () => {
-          if (!isResizing) return;
-          isResizing = false;
-          document.body.classList.remove('is-resizing-row');
-          const avail = availH();
-          if (avail > 0) {
-            this.settings.filesPanelRatio = filesPanel.offsetHeight / avail;
-            this.saveSettings();
-          }
+      // 侧栏标签页：大纲 / 文件夹二选一。标签页按钮在 HTML 中已按「大纲在前、文件夹在后」排列，
+      // 这里只负责绑定点击 + 同步 active/hidden 状态，不做 DOM 重排（避免闪烁）。
+      initSidebarTabs() {
+        const tabs = Array.from(document.querySelectorAll('#sidebar-tabs .sidebar-tab'));
+        tabs.forEach((btn) => {
+          btn.addEventListener('click', () => this.switchSidebarTab(btn.dataset.tab, { persist: true }));
         });
       },
-      // 按 settings.filesPanelRatio 还原上下比例（init / 启动 / 切换主题后调用）
-      applySplitterRatio() {
-        const filesPanel = document.getElementById('folder-content');
-        const outlinePanel = document.getElementById('outline-content');
+      // 切换侧栏标签页。persist=true 时写入 settings.sidebarTab（用户主动点击才记）。
+      // 打开 md 文件时会以 persist=false 调用「自动切到大纲」，避免覆盖用户上次的手动选择。
+      switchSidebarTab(tab, { persist = false } = {}) {
+        if (tab !== 'outline' && tab !== 'files') return;
         const sidebar = document.getElementById('outline-sidebar');
-        if (!filesPanel || !outlinePanel || !sidebar) return;
-        const sidebarH = sidebar.offsetHeight;
-        if (sidebarH <= 0) return;
-        // 扣完整 chrome（分隔条 + 大纲标题栏），保证两面板 basis 之和等于可用高度
-        let chrome = (document.getElementById('sidebar-h-resizer') || {}).offsetHeight || 4;
-        const oh = sidebar.querySelector('.outline-panel-header');
-        if (oh) chrome += oh.offsetHeight;
-        const avail = Math.max(0, sidebarH - chrome);
-        const ratio = Math.max(0.1, Math.min(0.9, this.settings.filesPanelRatio ?? 0.5));
-        const filesH = Math.round(avail * ratio);
-        filesPanel.style.flexBasis = filesH + 'px';
-        outlinePanel.style.flexBasis = (avail - filesH) + 'px';
+        if (!sidebar) return;
+        sidebar.querySelectorAll('.sidebar-tab').forEach((btn) => {
+          const on = btn.dataset.tab === tab;
+          btn.classList.toggle('active', on);
+          btn.setAttribute('aria-selected', String(on));
+        });
+        sidebar.querySelectorAll('.sidebar-tab-panel').forEach((panel) => {
+          panel.classList.toggle('hidden', panel.dataset.panel !== tab);
+        });
+        if (persist) {
+          this.settings.sidebarTab = tab;
+          this.saveSettings();
+        }
+        // 刻意不调updateOutline()：大纲内容随编辑器输入实时重渲染（preview-sync），
+        // 面板只是被 display 隐藏过、内容始终是新的；而重渲染会把用户手动折叠的
+        // 子块全部展开（buildOutlineTree 默认 expanded:true），白白丢失折叠状态。
       },
-      // 还原面板整体折叠态：折叠时仅隐藏内容区、保留标题栏，对侧 flex:1 自动占满；两折叠则均展开。
-      applyPanelCollapse() {
-        const filesPanel = document.getElementById('folder-content');
-        const outlinePanel = document.getElementById('outline-content');
-        const resizer = document.getElementById('sidebar-h-resizer');
-        const sidebar = document.getElementById('outline-sidebar');
-        if (!filesPanel || !outlinePanel) return;
-        let filesCollapsed = !!this.settings.filesCollapsed;
-        let outlineCollapsed = !!this.settings.outlineCollapsed;
-        // 两者同时折叠属异常态：强制都展开，避免整栏空白
-        if (filesCollapsed && outlineCollapsed) {
-          filesCollapsed = false;
-          outlineCollapsed = false;
-          this.settings.filesCollapsed = false;
-          this.settings.outlineCollapsed = false;
-        }
-        // 任一折叠时隐藏水平拖拽条（无占比可言）
-        if (resizer) resizer.classList.toggle('hidden', filesCollapsed || outlineCollapsed);
-        filesPanel.classList.toggle('panel-collapsed', filesCollapsed);
-        outlinePanel.classList.toggle('panel-collapsed', outlineCollapsed);
-        // 状态类：驱动折叠态 CSS（文件折叠→文件面板收缩为标题条、大纲内容占满；
-        // 大纲折叠→大纲内容隐藏、文件内容占满）。两标题相对位置由 DOM 顺序保证，不重排。
-        if (sidebar) {
-          sidebar.classList.toggle('files-collapsed', filesCollapsed);
-          sidebar.classList.toggle('outline-collapsed', outlineCollapsed);
-        }
-        const filesChevron = document.getElementById('files-chevron');
-        const outlineChevron = document.getElementById('outline-chevron');
-        if (filesChevron) {
-          filesChevron.classList.toggle('collapsed', filesCollapsed);
-          filesChevron.title = filesCollapsed ? '展开文件面板' : '收起文件面板';
-          filesChevron.setAttribute('aria-expanded', String(!filesCollapsed));
-        }
-        if (outlineChevron) {
-          outlineChevron.classList.toggle('collapsed', outlineCollapsed);
-          outlineChevron.title = outlineCollapsed ? '展开大纲面板' : '收起大纲面板';
-          outlineChevron.setAttribute('aria-expanded', String(!outlineCollapsed));
-        }
-        if (filesCollapsed || outlineCollapsed) {
-          // 折叠态下不需要按比例分配高度（CSS 接管：可见面板 flex:1 占满，折叠面板 flex:0 0 auto 缩为标题条）
-          filesPanel.style.flexBasis = '';
-          outlinePanel.style.flexBasis = '';
-        } else {
-          // 两面板都展开：恢复由 settings.filesPanelRatio 决定的上下比例（折叠时 basis 被清空过，必须重设）
-          this.applySplitterRatio();
-        }
-      },
-      // 面板整体折叠/展开切换
-      togglePanel(which) {
-        if (which !== 'files' && which !== 'outline') return;
-        const willCollapse = which === 'files' ? !this.settings.filesCollapsed : !this.settings.outlineCollapsed;
-        if (willCollapse) {
-          // 收起当前面板时，若另一面板已折叠，则联动展开另一面板——
-          // 保证「文件/大纲至少有一个可见」，同时尊重本次「收起当前」的意图。
-          const other = which === 'files' ? 'outline' : 'files';
-          const otherCollapsed = other === 'files' ? this.settings.filesCollapsed : this.settings.outlineCollapsed;
-          if (otherCollapsed) {
-            if (other === 'files') this.settings.filesCollapsed = false;
-            else this.settings.outlineCollapsed = false;
-          }
-        }
-        if (which === 'files') {
-          this.settings.filesCollapsed = !this.settings.filesCollapsed;
-        } else {
-          this.settings.outlineCollapsed = !this.settings.outlineCollapsed;
-        }
-        this.saveSettings();
-        this.applyPanelCollapse();
+      // 启动 / 恢复设置时按 settings.sidebarTab 还原标签页
+      applySidebarTab() {
+        const tab = this.settings.sidebarTab === 'files' ? 'files' : 'outline';
+        this.switchSidebarTab(tab, { persist: false });
       },
       // 文件树：一键展开/折叠全部目录
       async toggleAllFolders(expand) {

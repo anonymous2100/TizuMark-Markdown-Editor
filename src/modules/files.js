@@ -75,6 +75,15 @@
               console.error('Failed to open file:', filePath, e);
             }
           }
+          // 对话框打开的也含 md：与 openFilePath 保持一致，切到大纲标签页。
+          // 以「最终激活的 tab」类型为准（多选时最后打开的那个），而不是列表末项——
+          // 末项可能因读取失败而未真正打开，两者在异常路径下会不一致。
+          const activeKind = this.activeTab && this.activeTab.filePath
+            ? (window.FileTypes && window.FileTypes.classifyFile
+              ? window.FileTypes.classifyFile(this.activeTab.filePath)
+              : 'markdown')
+            : 'markdown';
+          this.revealOutlineForDoc(activeKind);
           this.syncViewModeToTab();
           this.applyViewMode();
           this.updateWordCount();
@@ -232,6 +241,7 @@
           const existingIndex = this.tabs.findIndex(t => t.filePath === filePath);
           if (existingIndex !== -1) {
             await this.switchTab(existingIndex);
+            this.revealOutlineForDoc(kind);
             this.saveSession();
             return;
           }
@@ -261,6 +271,7 @@
           this.viewMode = (kind === 'text') ? 'edit' : (this._sessionMdViewMode || this.settings.defaultView || 'preview');
           this.applyViewMode();
           this.updateWordCount();
+          this.revealOutlineForDoc(kind);
           this.setStatus(this.t('fileOpened', { name }));
           this.saveSession();
         } catch (e) {
@@ -269,6 +280,13 @@
         } finally {
           this._endPaneLoad();
         }
+      },
+      // 打开 Markdown 文档后把侧栏切到「大纲」标签页：文档主体打开即意味着用户要看结构，
+      // 大纲是该文档最直接的导航。仅 markdown 生效（text 无标题树，image 更无），
+      // 且 persist=false —— 不覆盖用户手动选中的标签，下次启动仍按其偏好还原。
+      revealOutlineForDoc(kind) {
+        if (kind !== 'markdown') return;
+        this.switchSidebarTab('outline', { persist: false });
       },
       // 非 Markdown 明文文件：按扩展名选择 CodeMirror 语法高亮模式（仅高亮，不改变编辑行为）
       _applyCodeMode(ext) {
@@ -310,6 +328,8 @@
           this.expandedFolders = new Set();
           await this.renderFolderTree();
           this.showSidebar();
+          // 打开工作区的动作本身就是「我要看文件树」→ 切到文件夹标签页（记入偏好）
+          this.switchSidebarTab('files', { persist: true });
           this.startFolderWatch();
           this.saveSession();
           this.addRecentWorkspace(folderPath);

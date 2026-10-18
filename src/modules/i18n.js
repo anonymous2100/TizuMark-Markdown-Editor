@@ -223,6 +223,8 @@
         setTitle('folder-up', t('folderUp'));
         setTitle('files-header-open', t('openWorkspaceFolderTitle'));
         setTitle('folder-path', t('openContainingFolder'));
+        setTitle('sidebar-tab-outline', t('outline'));
+        setTitle('sidebar-tab-files', t('folder'));
         // 文件目录排序下拉文案随语言刷新由 _folderSortSelect.applyI18n 统一处理（见下方 SETTINGS DROPDOWN OPTIONS）
         this.updateFolderSortOrderButton();
         this.updateFolderMenuLabel();

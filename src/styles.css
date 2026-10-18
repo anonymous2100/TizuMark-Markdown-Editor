@@ -3867,45 +3867,69 @@ body.wysiwyg-table-dragging * { cursor: grabbing !important; user-select: none !
   padding: 8px 0;
 }
 
-/* ====== 水平分隔条：调整文件/大纲上下比例 ====== */
-.sidebar-h-resizer {
-  height: 4px;
+/* ====== 侧栏标签栏：大纲 / 文件夹（左右排列） ====== */
+.sidebar-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px 6px 0;
   flex-shrink: 0;
-  background-color: var(--border-color);
-  cursor: row-resize;
-  position: relative;
-  z-index: 5;
-  transition: background-color 0.15s ease;
-}
-.sidebar-h-resizer:hover {
-  background-color: var(--accent-color);
-}
-.sidebar-h-resizer::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 28px;
-  height: 2px;
-  border-radius: 2px;
-  background-color: var(--text-secondary);
-  opacity: 0.4;
-}
-.sidebar-h-resizer:hover::after {
-  opacity: 0.7;
   background-color: var(--bg-primary);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+}
+.sidebar-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 6px 5px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: calc(var(--ui-font-size) * 0.8462);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.sidebar-tab:hover {
+  background-color: var(--bg-hover, rgba(128, 128, 128, 0.1));
+  color: var(--text-primary);
+}
+.sidebar-tab.active {
+  color: var(--accent-color, #4a90d9);
+  background-color: var(--bg-hover, rgba(128, 128, 128, 0.08));
+  border-bottom-color: var(--accent-color, #4a90d9);
+}
+.sidebar-tab:focus-visible {
+  outline: 2px solid var(--accent-color, #4a90d9);
+  outline-offset: -2px;
+}
+.sidebar-tab-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.sidebar-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* 拖拽期：禁用过渡 + 全局 row-resize 光标（与 is-resizing 列拖拽对称） */
-body.is-resizing-row * {
-  cursor: row-resize !important;
-  user-select: none !important;
+/* 标签页内容容器：同一时刻只有一个可见，独占侧栏剩余高度 */
+.sidebar-tab-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-body.is-resizing-row .outline-sidebar,
-body.is-resizing-row .sidebar-panel,
-body.is-resizing-row .sidebar-h-resizer {
-  transition: none !important;
+.sidebar-tab-panel.hidden {
+  display: none;
 }
 
 /* ====== 面板头（文件头 / 大纲头共用） ====== */
@@ -3964,7 +3988,6 @@ body.is-resizing-row .sidebar-h-resizer {
   margin: 0 2px;
   flex: 0 0 auto;
 }
-.panel-chevron,
 .panel-action-btn {
   width: 20px;
   height: 20px;
@@ -3979,29 +4002,21 @@ body.is-resizing-row .sidebar-h-resizer {
   padding: 0;
   transition: background-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
-.panel-chevron svg,
 .panel-action-btn svg {
   width: 14px;
   height: 14px;
 }
-.panel-chevron:hover,
 .panel-action-btn:hover {
   background-color: var(--bg-hover, rgba(128, 128, 128, 0.1));
   color: var(--text-primary);
 }
-.panel-chevron:active,
 .panel-action-btn:active {
   background-color: var(--accent-soft, rgba(74, 144, 217, 0.16));
   transform: scale(0.92);
 }
-.panel-chevron:focus-visible,
 .panel-action-btn:focus-visible {
   outline: 2px solid var(--accent-color, #4a90d9);
   outline-offset: 1px;
-}
-.panel-chevron.collapsed svg {
-  /* 展开 = ▼ 向下；折叠 = ▶ 向右（旋转 -90°），与 VS Code 等侧栏 disclosure 一致 */
-  transform: rotate(-90deg);
 }
 .files-panel-header,
 .outline-panel-header {
@@ -4042,24 +4057,8 @@ body.is-resizing-row .sidebar-h-resizer {
   flex: 1 1 0;
   overflow: auto;
   min-height: 0;
-  /* 折叠/展开只切换 display 与 flex-grow，禁用尺寸过渡避免 WebView 反复重排导致的卡顿 */
+  /* 标签页切换只切换 display，禁用尺寸过渡避免 WebView 反复重排导致的卡顿 */
   transition: none;
-}
-/* 大纲面板折叠：内容隐藏，标题栏（外部 .outline-panel-header 兄弟）保留 */
-#outline-content.panel-collapsed {
-  display: none;
-}
-/* 文件面板折叠：仅隐藏内容区（folder-header + folder-tree），保留内部标题栏（始终在面板顶部） */
-.folder-content.panel-collapsed {
-  /* 注意：不再用 column-reverse 把标题推到对侧——标题相对位置必须保持不变 */
-}
-.folder-content.panel-collapsed > .folder-header,
-.folder-content.panel-collapsed > #folder-tree {
-  display: none;
-}
-/* 任一面板折叠时隐藏水平拖拽条 */
-#sidebar-h-resizer.hidden {
-  display: none;
 }
 
 /* 文件面板「展开/折叠全部目录」loading 覆盖层：半透明、居中、不可穿透点击 */
@@ -4146,23 +4145,6 @@ body.is-resizing-row .sidebar-h-resizer {
 .tree-label--muted {
   color: var(--text-secondary);
   font-style: italic;
-}
-
-/* ====== 折叠：两标题保持 DOM 自然顺序（文件在上、大纲在下），相对位置不变 ======
-   文件折叠 → 文件面板收缩为标题条高度（flex:0 0 auto），大纲内容 flex:1 占满剩余空间；
-   大纲折叠 → 大纲内容隐藏，文件内容 flex:1 占满剩余空间。
-   不依赖 flex order 重排（那会让标题相对位置翻转、且触发更重的 flex 重排导致卡顿）。
-   两者不允许同时折叠（app.js togglePanel / applyPanelCollapse 双重保护）。 */
-#outline-sidebar.files-collapsed .folder-content {
-  flex: 0 0 auto;   /* 收缩为标题条高度 */
-}
-#outline-sidebar.outline-collapsed #outline-content {
-  display: none;
-}
-/* 显式声明可见面板占满（与 .sidebar-panel 默认 flex:1 1 0 一致，便于阅读） */
-#outline-sidebar.files-collapsed #outline-content,
-#outline-sidebar.outline-collapsed .folder-content {
-  flex: 1 1 0;
 }
 
 /* ====== 文件夹 / 文件树 ====== */
@@ -5876,7 +5858,7 @@ select option {
   user-select: none;
   caret-color: transparent;
 }
-/* 下拉框右侧小三角：与大纲/文件面板头最右侧 .panel-chevron 完全一致——
+/* 下拉框右侧小三角：与侧栏面板头的无边框图标体系一致——
    Lucide chevron-down（24×24 / stroke 2）、14×14、--text-secondary。
    由 Select/FontPicker 组件在容器内注入内联 SVG（.picker-caret），绝对定位于容器右侧垂直居中。
    不用背景图/mask（无法继承主题色，且 mask 在低版本 WebView2 渲染不可靠）。 */

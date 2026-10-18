@@ -103,7 +103,7 @@ class MarkdownEditor {
     this.initCrossSearch();
     this.initOutline();
     this.initOutlineResizer();
-    this.initSplitter();
+    this.initSidebarTabs();
     this.initPanelHeaders();
     this.initBreadcrumb();
     this.updateOutlineCheck();
@@ -114,7 +114,6 @@ class MarkdownEditor {
     this.initImagePaste();
     this.initTabScroll();
     this.loadTheme();
-    this.applySplitterRatio();
     this.updatePreview();
     this.applyViewMode();
     this.updateMaximizeIcon();

@@ -382,56 +382,59 @@
     </div>
 
     <main class="editor-container">
-      <div id="outline-sidebar" class="outline-sidebar">
-        <!-- 上：文件面板 -->
-        <div id="folder-content" class="folder-content sidebar-panel">
-          <div class="files-panel-header panel-header">
-            <span class="panel-title-group" id="files-header-open" title="选择/切换工作区文件夹">
-              <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
-              <span class="panel-title" data-i18n="files">文件</span>
-            </span>
+<div id="outline-sidebar" class="outline-sidebar">
+        <!-- 顶部标签栏：大纲 / 文件夹（左右排列，同一时刻只显示一个面板） -->
+        <div id="sidebar-tabs" class="sidebar-tabs" role="tablist" aria-label="侧边栏面板">
+          <button id="sidebar-tab-outline" class="sidebar-tab active" type="button" role="tab" data-tab="outline" aria-selected="true" aria-controls="outline-panel" title="大纲">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
+            <span class="sidebar-tab-label" data-i18n="outline">大纲</span>
+          </button>
+          <button id="sidebar-tab-files" class="sidebar-tab" type="button" role="tab" data-tab="files" aria-selected="false" aria-controls="folder-panel" title="文件夹">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+            <span class="sidebar-tab-label" data-i18n="folder">文件夹</span>
+          </button>
+        </div>
+        <!-- 标签页 1：大纲 -->
+        <div id="outline-panel" class="sidebar-tab-panel" data-panel="outline" role="tabpanel" aria-labelledby="sidebar-tab-outline">
+          <div class="outline-panel-header panel-header">
             <span class="header-actions">
-              <button id="btn-all-folders" class="panel-action-btn" type="button" title="展开/折叠全部目录" aria-label="展开或折叠全部目录">
+              <div id="outline-filter" class="outline-filter"></div>
+              <span class="header-divider" aria-hidden="true"></span>
+              <button id="btn-all-outline" class="panel-action-btn" type="button" title="展开/折叠全部大纲" aria-label="展开或折叠全部大纲">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg>
               </button>
-      <button id="files-chevron" class="panel-chevron" type="button" title="收起文件面板" aria-label="收起或展开文件面板">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
             </span>
           </div>
-          <div class="folder-header" id="folder-header">
-            <button id="folder-up" class="folder-up-btn" type="button" title="打开上一级目录" aria-label="打开上一级目录">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
-            </button>
-            <span class="folder-path" id="folder-path" title="在文件管理器中打开"></span>
-            <div class="folder-sort" id="folder-sort">
-              <div id="folder-sort-key" class="folder-sort-key" title=""></div>
-              <button id="folder-sort-order" class="folder-sort-order" type="button" title="升序" aria-label="切换排序方向"></button>
+          <div id="outline-content" class="outline-content sidebar-panel"></div>
+        </div>
+        <!-- 标签页 2：文件夹 -->
+        <div id="folder-panel" class="sidebar-tab-panel hidden" data-panel="files" role="tabpanel" aria-labelledby="sidebar-tab-files">
+          <div id="folder-content" class="folder-content sidebar-panel">
+            <div class="files-panel-header panel-header">
+              <span class="panel-title-group" id="files-header-open" title="选择/切换工作区文件夹">
+                <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+                <span class="panel-title" data-i18n="files">文件</span>
+              </span>
+              <span class="header-actions">
+                <button id="btn-all-folders" class="panel-action-btn" type="button" title="展开/折叠全部目录" aria-label="展开或折叠全部目录">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg>
+                </button>
+              </span>
             </div>
-            <button id="folder-close" class="folder-close-btn" title="关闭文件夹">&times;</button>
+            <div class="folder-header" id="folder-header">
+              <button id="folder-up" class="folder-up-btn" type="button" title="打开上一级目录" aria-label="打开上一级目录">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
+              </button>
+              <span class="folder-path" id="folder-path" title="在文件管理器中打开"></span>
+              <div class="folder-sort" id="folder-sort">
+                <div id="folder-sort-key" class="folder-sort-key" title=""></div>
+                <button id="folder-sort-order" class="folder-sort-order" type="button" title="升序" aria-label="切换排序方向"></button>
+              </div>
+              <button id="folder-close" class="folder-close-btn" title="关闭文件夹">&times;</button>
+            </div>
+            <div id="folder-tree" class="folder-tree"></div>
           </div>
-          <div id="folder-tree" class="folder-tree"></div>
         </div>
-        <!-- 水平拖拽条：调整文件/大纲面板高度比例 -->
-        <div id="sidebar-h-resizer" class="sidebar-h-resizer" title="拖拽调整上下比例"></div>
-        <!-- 下：大纲面板 -->
-        <div class="outline-panel-header panel-header">
-          <span class="panel-title-group">
-            <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
-            <span class="panel-title" data-i18n="outline">大纲</span>
-          </span>
-          <span class="header-actions">
-            <div id="outline-filter" class="outline-filter"></div>
-            <span class="header-divider" aria-hidden="true"></span>
-            <button id="btn-all-outline" class="panel-action-btn" type="button" title="展开/折叠全部大纲" aria-label="展开或折叠全部大纲">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg>
-            </button>
-      <button id="outline-chevron" class="panel-chevron" type="button" title="收起大纲面板" aria-label="收起或展开大纲面板">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-          </span>
-        </div>
-        <div id="outline-content" class="outline-content sidebar-panel"></div>
       </div>
       <div class="outline-resizer" id="outline-resizer"></div>
        <div class="editor-column">

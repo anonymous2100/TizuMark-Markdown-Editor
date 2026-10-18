@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!--侧栏标签页改造成果预览（仅供人工核对视觉，不参与构建/发布）。
+     直接复用 src/styles.css 的真实样式，侧栏 DOM 结构与 src/index.html 保持一致。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>TizuMark 侧栏标签页预览</title>
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg-secondary, #f6f7f9); }
+  .stage { display: flex; gap: 24px; align-items: flex-start; }
+  .frame {
+    width: 260px; height: 520px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px; overflow: hidden;
+    display: flex; background: var(--bg-primary, #fff);
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .frame .outline-sidebar { height: 100%; }
+  .caption { text-align: center; margin-top: 10px; font: 13px/1.6 system-ui, sans-serif; color: #555; }
+  .note { max-width: 720px; margin: 24px auto 0; font: 13px/1.8 system-ui, sans-serif; color: #555; }
+  .note code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; }
+  /* 预览专用：给文件树塞点静态内容，看起来像真实状态 */
+  .pv-tree { padding: 4px 0; font-size: 12px; }
+  .pv-row { display: flex; align-items: center; gap: 6px; padding: 3px 10px; color: var(--text-secondary); }
+  .pv-row.active { background: var(--accent-soft, rgba(74,144,217,.16)); color: var(--text-primary); }
+  .pv-item { padding: 3px 10px 3px 26px; color: var(--text-secondary); font-size: 12px; }
+  .pv-item.l1 { color: var(--text-primary); font-weight: 600; }
+  .pv-item.l2 { padding-left: 40px; }
+  .pv-sp { height: 8px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- 状态 1：大纲（默认） -->
+  <div>
+    <div class="frame">
+      <div class="outline-sidebar">
+        <div class="sidebar-tabs" role="tablist">
+          <button class="sidebar-tab active" type="button" role="tab" data-tab="outline" aria-selected="true">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
+            <span class="sidebar-tab-label">大纲</span>
+          </button>
+          <button class="sidebar-tab" type="button" role="tab" data-tab="files" aria-selected="false">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+            <span class="sidebar-tab-label">文件夹</span>
+          </button>
+        </div>
+        <div class="sidebar-tab-panel" data-panel="outline">
+          <div class="outline-panel-header panel-header">
+            <span class="header-actions">
+              <div class="outline-filter"><div class="select-component-input">全部 ▾</div></div>
+              <span class="header-divider"></span>
+              <button class="panel-action-btn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg>
+              </button>
+            </span>
+          </div>
+          <div class="outline-content sidebar-panel">
+            <div class="pv-item l1">项目介绍</div>
+            <div class="pv-item l2">功能特性</div>
+            <div class="pv-item l2">安装使用</div>
+            <div class="pv-item l1">快速开始</div>
+            <div class="pv-item l2">打开工作区</div>
+            <div class="pv-item l2">新建文档</div>
+            <div class="pv-sp"></div>
+            <div class="pv-item l1">配置说明</div>
+            <div class="pv-item l2">主题设置</div>
+            <div class="pv-item l2">快捷键</div>
+            <div class="pv-sp"></div>
+            <div class="pv-item l1">常见问题</div>
+          </div>
+        </div>
+        <div class="sidebar-tab-panel hidden" data-panel="files">
+          <div class="folder-content sidebar-panel">
+            <div class="files-panel-header panel-header">
+              <span class="panel-title-group">
+                <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+                <span class="panel-title">文件</span>
+              </span>
+              <span class="header-actions">
+                <button class="panel-action-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg></button>
+              </span>
+            </div>
+            <div class="folder-header">
+              <span class="folder-path">D:\workspace\notes</span>
+            </div>
+            <div class="folder-tree pv-tree">
+              <div class="pv-row">▾ docs</div>
+              <div class="pv-row">▸ src</div>
+              <div class="pv-row">▸ assets</div>
+              <div class="pv-sp"></div>
+              <div class="pv-row active">README.md</div>
+              <div class="pv-row">CHANGELOG.md</div>
+              <div class="pv-row">guide.md</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">默认态：<b>大纲</b>标签（打开 md 文件时自动切到这里）</div>
+  </div>
+
+  <!-- 状态 2：文件夹 -->
+  <div>
+    <div class="frame">
+      <div class="outline-sidebar">
+        <div class="sidebar-tabs" role="tablist">
+          <button class="sidebar-tab" type="button" role="tab" data-tab="outline" aria-selected="false">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
+            <span class="sidebar-tab-label">大纲</span>
+          </button>
+          <button class="sidebar-tab active" type="button" role="tab" data-tab="files" aria-selected="true">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+            <span class="sidebar-tab-label">文件夹</span>
+          </button>
+        </div>
+        <div class="sidebar-tab-panel hidden" data-panel="outline">
+          <div class="outline-panel-header panel-header">
+            <span class="header-actions">
+              <div class="outline-filter"><div class="select-component-input">全部 ▾</div></div>
+              <span class="header-divider"></span>
+              <button class="panel-action-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg></button>
+            </span>
+          </div>
+          <div class="outline-content sidebar-panel"><div class="pv-item l1">项目介绍</div></div>
+        </div>
+        <div class="sidebar-tab-panel" data-panel="files">
+          <div class="folder-content sidebar-panel">
+            <div class="files-panel-header panel-header">
+              <span class="panel-title-group">
+                <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+                <span class="panel-title">文件</span>
+              </span>
+              <span class="header-actions">
+                <button class="panel-action-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg></button>
+              </span>
+            </div>
+            <div class="folder-header">
+              <button class="folder-up-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg></button>
+              <span class="folder-path">D:\workspace\notes</span>
+              <button class="folder-close-btn">&times;</button>
+            </div>
+            <div class="folder-tree pv-tree">
+              <div class="pv-row">▾ docs</div>
+              <div class="pv-row" style="padding-left:22px">▸ 01-入门</div>
+              <div class="pv-row" style="padding-left:22px">▸ 02-进阶</div>
+              <div class="pv-row">▸ src</div>
+              <div class="pv-row">▸ assets</div>
+              <div class="pv-sp"></div>
+              <div class="pv-row active">README.md</div>
+              <div class="pv-row">CHANGELOG.md</div>
+              <div class="pv-row">guide.md</div>
+              <div class="pv-row">notes.txt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">切换态：<b>文件夹</b>标签（手动点击 / 打开工作区时自动切到这里）</div>
+  </div>
+</div>
+
+<div class="note">
+  <p><b>本次改造要点</b></p>
+  <ul>
+    <li>左侧栏顶部新增<b>左右两个标签页</b>：第一个「大纲」、第二个「文件夹」，等分宽度并排。</li>
+    <li>两个面板<b>互斥显示</b>，取代原来的上下分屏 + 水平拖拽条 + 折叠 chevron。</li>
+    <li>打开 <code>.md</code> 文件时自动切到<b>大纲</b>标签（仅本次生效，不覆盖用户手动选择）；打开工作区文件夹则切到<b>文件夹</b>标签。</li>
+    <li>手动点击标签的选择会持久化到 <code>settings.sidebarTab</code>，下次启动按偏好还原。</li>
+  </ul>
+</div>
+</body>
+</html>
