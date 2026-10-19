@@ -6980,7 +6980,10 @@ select option {
   @page { margin: 1.5cm; }
 }
 
-/* 自定义页面底色：仅覆盖编辑区与预览区，侧边栏/工具栏不变。--custom-bg/--custom-fg 由 JS 设置，缺省时回退主题变量。 */
+/* 自定义页面底色：覆盖编辑区、预览区与左侧侧栏（大纲 / 文件夹），工具栏/状态栏等 chrome 不变。
+   --custom-bg/--custom-fg 由 JS（modules/theme.js applyCustomBg）设置，缺省时回退主题变量。
+   ⚠️ 改动这里前先看 fix 2142aa2：早期把 `.preview-content` 一并覆盖，更新对话框说明区
+   （reuses .preview-content 类名）跟着一起变色，因此收敛为仅 #preview。扩范围时同样要克制。 */
 body.custom-bg-active #editor-wrapper .CodeMirror,
 body.custom-bg-active #editor-wrapper .CodeMirror .CodeMirror-gutters {
   background-color: var(--custom-bg, var(--bg-primary)) !important;
@@ -6991,4 +6994,31 @@ body.custom-bg-active #editor-wrapper .CodeMirror {
 body.custom-bg-active #preview {
   background-color: var(--custom-bg, var(--bg-primary)) !important;
   color: var(--custom-fg, var(--text-primary));
+}
+
+/* ====== 左侧侧栏跟随自定义底色（2026-10-19 用户需求） ======
+   大纲 / 文件夹与编辑区、预览区同色，避免「自定义了底色、侧边还是主题灰」的割裂感。
+   做法：在 .outline-sidebar 上「就地」重定义主题变量，让侧栏内部所有写死
+   var(--bg-primary) / --bg-secondary / --text-secondary / --bg-hover / --border-color 的子元素
+   （标签栏、文件夹头、面板头 chip、文件树、loading 遮罩…）零改动跟随。
+
+   ⚠️ 两个必须遵守的细节：
+   1) 不能在同一条声明里「用 --bg-primary 又重定义 --bg-primary」——自定义属性引用自身构成循环，
+      该值会让整条 background-color 失效（invalid at computed-value time → 继承/透明）。
+      因此先用 --sidebar-bg 承接取色结果，再把 --bg-primary 指向它。
+   2) 派生色（文字/边框/悬停底）一律由 --custom-fg 降透明合成：主题里那些值是配「主题底色」调的，
+      直接套用户自选色（尤其纯黑/纯白）会糊成一片；由前景色派生后浅底深底都清晰、层级关系不变。
+   变量重定义作用域仅 .outline-sidebar 子树，侧栏外一切元素不受影响。
+   ⚠️ 同理别把 --code-bg / --toc-bg 等「内容语义色」一并重定义——它们属于排版语义，不是 chrome 底色。 */
+body.custom-bg-active .outline-sidebar {
+  --sidebar-bg: var(--custom-bg, var(--bg-primary));
+  --sidebar-fg: var(--custom-fg, var(--text-primary));
+  --bg-primary: var(--sidebar-bg);
+  --bg-secondary: color-mix(in srgb, var(--sidebar-fg) 6%, var(--sidebar-bg));
+  --text-primary: var(--sidebar-fg);
+  --text-secondary: color-mix(in srgb, var(--sidebar-fg) 70%, transparent);
+  --bg-hover: color-mix(in srgb, var(--sidebar-fg) 10%, transparent);
+  --border-color: color-mix(in srgb, var(--sidebar-fg) 20%, transparent);
+  background-color: var(--sidebar-bg) !important;
+  color: var(--sidebar-fg);
 }
