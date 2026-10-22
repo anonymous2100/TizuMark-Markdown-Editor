@@ -7,72 +7,137 @@
 
   const mixin = {
       initOutline() {
-        // 侧边栏关闭统一由「视图 → 侧边栏」菜单（toggleSidebar）控制，不再保留顶部关闭栏。
+        // 侧栏开关由左右两个吸附把手（#folder-float-btn / #sidebar-float-btn）控制，
+        // 面板本身常驻 DOM，仅切 hidden 类。
         const outlineSidebar = document.getElementById('outline-sidebar');
         if (!outlineSidebar) return;
       },
+      // 左右两侧栏的元素集合（集中取一次，避免各方法反复写 id 字符串）
+      _panelEls() {
+        return {
+          folder: document.getElementById('folder-sidebar'),
+          outline: document.getElementById('outline-sidebar'),
+          folderResizer: document.getElementById('folder-resizer'),
+          outlineResizer: document.getElementById('outline-resizer'),
+          folderBtn: document.getElementById('folder-float-btn'),
+          outlineBtn: document.getElementById('sidebar-float-btn'),
+        };
+      },
+      // 同步两个吸附把手的位置/状态：展开时骑在分隔线上，收起时贴窗口边缘并 accent 常亮。
+      // 注意 jsdom 无布局（offsetWidth 恒 0），可见性一律按 classList 判定。
       updateSideButtons() {
-        const outlineSidebar = document.getElementById('outline-sidebar');
+        const el = this._panelEls();
+        const { folder, outline, folderBtn, outlineBtn } = el;
         const sideLeft = document.getElementById('btn-side-left');
         const sideRight = document.getElementById('btn-side-right');
-        const outlineWidth = outlineSidebar.classList.contains('hidden') ? 0 : outlineSidebar.offsetWidth;
-        sideLeft.style.left = outlineWidth + 'px';
-        sideRight.style.left = '';
-        // 侧边栏吸附把手：与 ◀ 把手同锚（左缘贴分隔线向右伸），关闭后两侧手同落左缘、本把手 accent 常亮。
-        // 注意 jsdom 无布局，可见性必须按 classList 判定（offsetWidth 恒 0）。
-        const floatBtn = document.getElementById('sidebar-float-btn');
-        if (floatBtn) {
-          const visible = !outlineSidebar.classList.contains('hidden');
-          floatBtn.classList.toggle('sidebar-open', visible);
-          floatBtn.style.left = visible ? outlineWidth + 'px' : '';
-          floatBtn.setAttribute('aria-pressed', String(visible));
+
+        const folderOpen = !!folder && !folder.classList.contains('hidden');
+        const outlineOpen = !!outline && !outline.classList.contains('hidden');
+        const folderWidth = folderOpen ? folder.offsetWidth : 0;
+        const outlineWidth = outlineOpen ? outline.offsetWidth : 0;
+
+        // 「◀ 折叠编辑器」把手贴在左侧文件夹栏右缘（文件夹收起时即窗口左缘）；
+        // 「▶ 折叠预览」把手贴在右侧大纲栏左缘（大纲收起时即窗口右缘），避免压在大纲栏上。
+        if (sideLeft) sideLeft.style.left = folderWidth + 'px';
+        if (sideRight) sideRight.style.right = outlineOpen ? outlineWidth + 'px' : '';
+
+        if (folderBtn) {
+          folderBtn.classList.toggle('sidebar-open', folderOpen);
+          folderBtn.setAttribute('aria-pressed', String(folderOpen));
+          folderBtn.style.left = folderOpen ? folderWidth + 'px' : '';
+        }
+        if (outlineBtn) {
+          outlineBtn.classList.toggle('sidebar-open', outlineOpen);
+          outlineBtn.setAttribute('aria-pressed', String(outlineOpen));
+          // 大纲栏贴右缘：把手右偏量 = 栏宽，使其骑在栏体左侧分隔线上
+          outlineBtn.style.right = outlineOpen ? outlineWidth + 'px' : '';
         }
       },
-        toggleSidebar() {
-          const sidebar = document.getElementById('outline-sidebar');
-          const wasHidden = sidebar.classList.contains('hidden');
-          if (wasHidden) {
-            sidebar.style.width = (this.settings.outlineWidth ?? 240) + 'px';
-            sidebar.classList.remove('hidden');
-          } else {
-            this.settings.outlineWidth = sidebar.offsetWidth;
-            sidebar.style.width = '';
+      // 通用开关：panel='folder' | 'outline'。返回切换后的可见状态。
+      _setPanelVisible(panel, visible, { persist = true } = {}) {
+        const el = this._panelEls();
+        const isFolder = panel === 'folder';
+        const sidebar = isFolder ? el.folder : el.outline;
+        const resizer = isFolder ? el.folderResizer : el.outlineResizer;
+        if (!sidebar) return false;
+        const widthKey = isFolder ? 'folderWidth' : 'outlineWidth';
+        const hiddenKey = isFolder ? 'folderHidden' : 'sidebarHidden';
+        const width = this.settings[widthKey] ?? 240;
+
+        if (visible) {
+          sidebar.style.width = width + 'px';
+          sidebar.classList.remove('hidden');
+          if (resizer) resizer.classList.remove('hidden');
+        } else {
+          // 收起前把当前实际宽度记下来，下次展开按原宽度还原
+          if (sidebar.offsetWidth > 0) this.settings[widthKey] = sidebar.offsetWidth;
+          sidebar.style.width = '';
+          sidebar.classList.add('hidden');
+          if (resizer) resizer.classList.add('hidden');
+        }
+        this.settings[hiddenKey] = !visible;
+        if (persist) this.saveSettings();
+        this.updateSideButtons();
+        if (visible && isFolder) this.updateFolderSortOrderButton?.();
+        if (visible && !isFolder) this.updateOutline();
+        return visible;
+      },
+      toggleFolderPanel() {
+        const el = this._panelEls();
+        const visible = !!(el.folder && el.folder.classList.contains('hidden'));
+        return this._setPanelVisible('folder', visible);
+      },
+      toggleOutlinePanel() {
+        const el = this._panelEls();
+        const visible = !!(el.outline && el.outline.classList.contains('hidden'));
+        return this._setPanelVisible('outline', visible);
+      },
+      // 兼容旧调用点（快捷键 Ctrl+B / 菜单）：切换右侧大纲栏
+      toggleSidebar() {
+        return this.toggleOutlinePanel();
+      },
+      // 确保右侧大纲栏可见（打开 md 文档、会话恢复等场景）
+      showSidebar() {
+        const el = this._panelEls();
+        if (el.outline && el.outline.classList.contains('hidden')) {
+          this._setPanelVisible('outline', true);
+        } else {
+          this.updateSideButtons();
+          if (el.outline && !el.outline.classList.contains('hidden')) this.updateOutline();
+        }
+      },
+      // 确保左侧文件夹栏可见（打开工作区文件夹等场景）
+      showFolderPanel() {
+        const el = this._panelEls();
+        if (el.folder && el.folder.classList.contains('hidden')) {
+          this._setPanelVisible('folder', true);
+        } else {
+          this.updateSideButtons();
+        }
+      },
+      // 启动时按 settings 还原两侧栏（开合 + 宽度）。默认：大纲展开、文件夹折叠。
+      applySidebarState() {
+        const el = this._panelEls();
+        this._setPanelVisible('outline', !this.settings.sidebarHidden, { persist: false });
+        this._setPanelVisible('folder', !this.settings.folderHidden, { persist: false });
+        // 收起态显式补一次 hidden/宽度，避免 HTML 初始样式与设置不一致时闪烁
+        for (const [panel, hidden] of [['outline', this.settings.sidebarHidden], ['folder', this.settings.folderHidden]]) {
+          const sidebar = panel === 'folder' ? el.folder : el.outline;
+          const resizer = panel === 'folder' ? el.folderResizer : el.outlineResizer;
+          const key = panel === 'folder' ? 'folderWidth' : 'outlineWidth';
+          if (!sidebar) continue;
+          if (hidden) {
             sidebar.classList.add('hidden');
-          }
-          this.settings.sidebarHidden = sidebar.classList.contains('hidden');
-          this.saveSettings();
-          this.updateSidebarChecks();
-          if (!sidebar.classList.contains('hidden')) {
-            this.updateOutline();
-          }
-          this.updateSideButtons();
-        },
-        // 仅确保侧边栏可见（分屏改造后无 Tab 切换，文件/大纲双面板常显）。
-        showSidebar() {
-          const sidebar = document.getElementById('outline-sidebar');
-          if (sidebar.classList.contains('hidden')) {
-            sidebar.style.width = (this.settings.outlineWidth ?? 240) + 'px';
-            sidebar.classList.remove('hidden');
-            this.settings.sidebarHidden = false;
-            this.saveSettings();
-          }
-          this.updateSidebarChecks();
-          this.updateSideButtons();
-          if (!sidebar.classList.contains('hidden')) this.updateOutline();
-        },
-        applySidebarState() {
-          const sidebar = document.getElementById('outline-sidebar');
-          if (this.settings.sidebarHidden) {
             sidebar.style.width = '';
-            sidebar.classList.add('hidden');
+            if (resizer) resizer.classList.add('hidden');
           } else {
-            sidebar.style.width = (this.settings.outlineWidth ?? 240) + 'px';
             sidebar.classList.remove('hidden');
+            sidebar.style.width = (this.settings[key] ?? 240) + 'px';
+            if (resizer) resizer.classList.remove('hidden');
           }
-          this.updateSidebarChecks();
-          this.updateSideButtons();
-          this.applySidebarTab();
-        },
+        }
+        this.updateSideButtons();
+      },
       updateSidebarChecks() {
         // 原「视图 → 侧边栏」菜单已移除，勾选同步不再需要；保留钩子供未来菜单项复用。
       },
@@ -129,13 +194,16 @@
         this._updateAllFoldersBtn();
         this._updateAllOutlineBtn();
       },
-      initOutlineResizer() {
-        const resizer = document.getElementById('outline-resizer');
-        const sidebar = document.getElementById('outline-sidebar');
+      // 两个侧栏共用的拖宽逻辑。dir=1 表示分隔器在面板右缘（左侧文件夹栏：右移变宽），
+      // dir=-1 表示分隔器在面板左缘（右侧大纲栏：左移变宽）。
+      _bindSidebarResizer({ resizerId, sidebarId, widthKey, dir }) {
+        const resizer = document.getElementById(resizerId);
+        const sidebar = document.getElementById(sidebarId);
+        if (!resizer || !sidebar) return;
         let isResizing = false;
         let startX = 0;
         let startWidth = 0;
-  
+
         resizer.addEventListener('mousedown', (e) => {
           e.preventDefault();
           isResizing = true;
@@ -143,62 +211,51 @@
           startWidth = sidebar.offsetWidth;
           document.body.classList.add('is-resizing');
         });
-  
+
         document.addEventListener('mousemove', (e) => {
           if (!isResizing) return;
-          const delta = e.clientX - startX;
-          let newWidth = startWidth + delta;
-          newWidth = Math.max(80, Math.min(500, newWidth));
+          const delta = (e.clientX - startX) * dir;
+          const newWidth = Math.max(80, Math.min(500, startWidth + delta));
           sidebar.style.width = newWidth + 'px';
-          this.cm.refresh();
+          if (this.cm) this.cm.refresh();
           this.updateSideButtons();
         });
-  
+
         document.addEventListener('mouseup', () => {
           if (!isResizing) return;
           isResizing = false;
           document.body.classList.remove('is-resizing');
-          this.settings.outlineWidth = sidebar.offsetWidth;
+          this.settings[widthKey] = sidebar.offsetWidth;
           this.saveSettings();
+        });
+      },
+      initOutlineResizer() {
+        // 左侧文件夹栏：分隔器在右缘，右移变宽
+        this._bindSidebarResizer({
+          resizerId: 'folder-resizer',
+          sidebarId: 'folder-sidebar',
+          widthKey: 'folderWidth',
+          dir: 1,
+        });
+        // 右侧大纲栏：分隔器在左缘，左移变宽
+        this._bindSidebarResizer({
+          resizerId: 'outline-resizer',
+          sidebarId: 'outline-sidebar',
+          widthKey: 'outlineWidth',
+          dir: -1,
         });
       },
       updateOutlineCheck() {
         this.updateSidebarChecks();
       },
-      // 侧栏标签页：大纲 / 文件夹二选一。标签页按钮在 HTML 中已按「大纲在前、文件夹在后」排列，
-      // 这里只负责绑定点击 + 同步 active/hidden 状态，不做 DOM 重排（避免闪烁）。
+      // 左右侧栏开关按钮：各自独立切自己的面板（大纲 / 文件夹同时可见，互不排斥）。
       initSidebarTabs() {
-        const tabs = Array.from(document.querySelectorAll('#sidebar-tabs .sidebar-tab'));
-        tabs.forEach((btn) => {
-          btn.addEventListener('click', () => this.switchSidebarTab(btn.dataset.tab, { persist: true }));
-        });
-      },
-      // 切换侧栏标签页。persist=true 时写入 settings.sidebarTab（用户主动点击才记）。
-      // 打开 md 文件时会以 persist=false 调用「自动切到大纲」，避免覆盖用户上次的手动选择。
-      switchSidebarTab(tab, { persist = false } = {}) {
-        if (tab !== 'outline' && tab !== 'files') return;
-        const sidebar = document.getElementById('outline-sidebar');
-        if (!sidebar) return;
-        sidebar.querySelectorAll('.sidebar-tab').forEach((btn) => {
-          const on = btn.dataset.tab === tab;
-          btn.classList.toggle('active', on);
-          btn.setAttribute('aria-selected', String(on));
-        });
-        sidebar.querySelectorAll('.sidebar-tab-panel').forEach((panel) => {
-          panel.classList.toggle('hidden', panel.dataset.panel !== tab);
-        });
-        if (persist) {
-          this.settings.sidebarTab = tab;
-          this.saveSettings();
-        }
-        // 刻意不调updateOutline()：大纲内容随编辑器输入实时重渲染（preview-sync），
-        // 面板只是被 display 隐藏过、内容始终是新的；而重渲染会把用户手动折叠的
-        // 子块全部展开（buildOutlineTree 默认 expanded:true），白白丢失折叠状态。
-      },
-      // 启动 / 恢复设置时按 settings.sidebarTab 还原标签页
-      applySidebarTab() {
-        const tab = this.settings.sidebarTab === 'files' ? 'files' : 'outline';
-        this.switchSidebarTab(tab, { persist: false });
+        const bind = (id, fn) => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener('click', fn);
+        };
+        bind('folder-float-btn', () => this.toggleFolderPanel());
+        bind('sidebar-float-btn', () => this.toggleOutlinePanel());
       },
       // 文件树：一键展开/折叠全部目录
       async toggleAllFolders(expand) {
@@ -675,12 +732,21 @@
       escapeMdText(text) {
         return String(text).replace(/\\/g, '\\\\').replace(/\]/g, '\\]');
       },
+      // 编辑区/预览区之间分隔器可用宽度的公共算法：容器宽 - 左文件夹栏 - 右大纲栏 - 两个侧栏分隔器
+      _contentWidthForPanes(container) {
+        const el = this._panelEls();
+        const widthOf = (sidebar, resizer) => {
+          if (!sidebar || sidebar.classList.contains('hidden')) return 0;
+          return (sidebar.offsetWidth || 0) + (resizer ? resizer.offsetWidth : 0);
+        };
+        const sides = widthOf(el.folder, el.folderResizer) + widthOf(el.outline, el.outlineResizer);
+        return container.offsetWidth - sides;
+      },
       initResizer() {
         const resizer = document.getElementById('resizer');
         const container = document.querySelector('.editor-container');
         const editorPane = document.getElementById('editor-pane');
         const previewPane = document.getElementById('preview-pane');
-        const outlineSidebar = document.getElementById('outline-sidebar');
         let isResizing = false;
         let startX = 0;
         let startEditorWidth = 0;
@@ -689,9 +755,9 @@
           if (!isResizing) return;
           const delta = e.clientX - startX;
           const newEditorWidth = startEditorWidth + delta;
-          const outlineWidth = outlineSidebar.classList.contains('hidden') ? 0 : outlineSidebar.offsetWidth;
           const resizerWidth = resizer.offsetWidth;
-          const totalContentWidth = container.offsetWidth - outlineWidth - resizerWidth;
+          const totalContentWidth = this._contentWidthForPanes(container) - resizerWidth;
+          if (totalContentWidth <= 0) return;
           const editorPercent = (newEditorWidth / totalContentWidth) * 100;
           if (editorPercent > 20 && editorPercent < 80) {
             const editorRatio = editorPercent / 100;
@@ -741,11 +807,9 @@
         const editorPane = document.getElementById('editor-pane');
         const previewPane = document.getElementById('preview-pane');
         if (!editorPane || !previewPane) return;
-        const outlineSidebar = document.getElementById('outline-sidebar');
         const resizer = document.getElementById('resizer');
-        const outlineWidth = outlineSidebar && outlineSidebar.classList.contains('hidden') ? 0 : (outlineSidebar ? outlineSidebar.offsetWidth : 0);
         const resizerWidth = resizer ? resizer.offsetWidth : 6;
-        const totalContentWidth = container.offsetWidth - outlineWidth - resizerWidth;
+        const totalContentWidth = this._contentWidthForPanes(container) - resizerWidth;
         if (totalContentWidth <= 0) return;
         const editorWidth = totalContentWidth - pw;
         const editorRatio = (editorWidth / totalContentWidth);

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!--左右双栏侧栏成果预览（仅供人工核对视觉，不参与构建/发布）。
+     直接复用 src/styles.css 的真实样式，结构示意与 src/index.html 保持一致：
+     左 = 文件夹栏（默认折叠），右 = 大纲栏（默认展开），各自带吸附把手。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>TizuMark 左右双栏侧栏预览</title>
+<link rel="stylesheet" href="../src/styles.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg-secondary, #f6f7f9); }
+  .stage { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; }
+  .frame {
+    width: 760px; height: 320px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px; overflow: hidden;
+    display: flex; background: var(--bg-primary, #fff);
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    position: relative;
+  }
+  .frame .outline-sidebar { height: 100%; }
+  .frame .editor-column { flex: 1; min-width: 0; background: var(--bg-primary, #fff); }
+  .frame .outline-resizer { height: 100%; }
+  .caption { margin-top: 10px; font: 13px/1.6 system-ui, sans-serif; color: #555; }
+  .note { max-width: 820px; margin: 8px 0 0; font: 13px/1.8 system-ui, sans-serif; color: #555; }
+  .note code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; }
+  .pv-tree { padding: 4px 0; font-size: 12px; }
+  .pv-row { display: flex; align-items: center; gap: 6px; padding: 3px 10px; color: var(--text-secondary); }
+  .pv-row.active { background: var(--accent-soft, rgba(74,144,217,.16)); color: var(--text-primary); }
+  .pv-item { padding: 3px 10px 3px 26px; color: var(--text-secondary); font-size: 12px; }
+  .pv-item.l1 { color: var(--text-primary); font-weight: 600; }
+  .pv-item.l2 { padding-left: 40px; }
+  .pv-sp { height: 8px; }
+  /* 预览用：把把手定到分隔线位置（真实运行时由 JS updateSideButtons 计算） */
+  .frame .folder-float-btn { left: 200px; }
+  .frame .sidebar-float-btn--right { right: 200px; }
+  .frame.is-collapsed .folder-float-btn { left: 0; }
+  .frame.is-collapsed .sidebar-float-btn--right { right: 0; }
+  .pv-editor-hint {
+    display: flex; align-items: center; justify-content: center; height: 100%;
+    color: var(--text-secondary); font: 13px/1.6 system-ui, sans-serif;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- 状态 1：默认（文件夹折叠、大纲展开） -->
+  <div>
+    <div class="frame is-collapsed" style="width: 760px; height: 300px;">
+      <!-- 左侧文件夹栏：折叠态（width:0），看不到内容 -->
+      <div class="outline-sidebar folder-sidebar hidden">
+        <div class="sidebar-tab-panel" data-panel="files">
+          <div class="folder-content sidebar-panel">
+            <div class="files-panel-header panel-header">
+              <span class="panel-title-group">
+                <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+                <span class="panel-title">文件</span>
+              </span>
+            </div>
+            <div class="folder-tree pv-tree">
+              <div class="pv-row">▾ docs</div>
+              <div class="pv-row active">README.md</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="outline-resizer folder-resizer hidden"></div>
+      <div class="editor-column"><div class="pv-editor-hint">编辑区 / 预览区</div></div>
+      <div class="outline-resizer outline-right-resizer"></div>
+      <div class="outline-sidebar outline-sidebar--right">
+        <div class="sidebar-tab-panel" data-panel="outline">
+          <div class="outline-panel-header panel-header">
+            <span class="panel-title-group">
+              <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
+              <span class="panel-title">大纲</span>
+            </span>
+            <span class="header-actions">
+              <div class="outline-filter"><div class="select-component-input">全部 ▾</div></div>
+              <span class="header-divider"></span>
+              <button class="panel-action-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3 3-3 3"/></svg></button>
+            </span>
+          </div>
+          <div class="outline-content sidebar-panel">
+            <div class="pv-item l1">项目介绍</div>
+            <div class="pv-item l2">功能特性</div>
+            <div class="pv-item l2">安装使用</div>
+            <div class="pv-sp"></div>
+            <div class="pv-item l1">快速开始</div>
+            <div class="pv-item l2">打开工作区</div>
+            <div class="pv-item l2">新建文档</div>
+          </div>
+        </div>
+      </div>
+      <button class="sidebar-float-btn folder-float-btn" type="button" title="切换文件夹栏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+      </button>
+      <button class="sidebar-float-btn sidebar-float-btn--right sidebar-open" type="button" title="切换大纲栏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+    </div>
+    <div class="caption">默认态：<b>文件夹栏折叠</b>（左侧贴边把手常亮）、<b>大纲栏展开</b>（右侧骑线把手）</div>
+  </div>
+
+  <!-- 状态 2：两栏都展开 -->
+  <div>
+    <div class="frame" style="width: 760px; height: 300px;">
+      <div class="outline-sidebar folder-sidebar" style="width: 200px;">
+        <div class="sidebar-tab-panel" data-panel="files">
+          <div class="folder-content sidebar-panel">
+            <div class="files-panel-header panel-header">
+              <span class="panel-title-group">
+                <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+                <span class="panel-title">文件</span>
+              </span>
+              <span class="header-actions">
+                <button class="panel-action-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3 3-3 3"/></svg></button>
+              </span>
+            </div>
+            <div class="folder-header">
+              <button class="folder-up-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg></button>
+              <span class="folder-path">D:\workspace\notes</span>
+              <button class="folder-close-btn">&times;</button>
+            </div>
+            <div class="folder-tree pv-tree">
+              <div class="pv-row">▾ docs</div>
+              <div class="pv-row" style="padding-left:22px">▸ 01-入门</div>
+              <div class="pv-row">▸ src</div>
+              <div class="pv-row active">README.md</div>
+              <div class="pv-row">CHANGELOG.md</div>
+              <div class="pv-row">guide.md</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="outline-resizer folder-resizer"></div>
+      <div class="editor-column"><div class="pv-editor-hint">编辑区 / 预览区</div></div>
+      <div class="outline-resizer outline-right-resizer"></div>
+      <div class="outline-sidebar outline-sidebar--right" style="width: 200px;">
+        <div class="sidebar-tab-panel" data-panel="outline">
+          <div class="outline-panel-header panel-header">
+            <span class="panel-title-group">
+              <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
+              <span class="panel-title">大纲</span>
+            </span>
+          </div>
+          <div class="outline-content sidebar-panel">
+            <div class="pv-item l1">项目介绍</div>
+            <div class="pv-item l2">功能特性</div>
+            <div class="pv-sp"></div>
+            <div class="pv-item l1">快速开始</div>
+            <div class="pv-item l2">打开工作区</div>
+          </div>
+        </div>
+      </div>
+      <button class="sidebar-float-btn folder-float-btn" type="button" title="切换文件夹栏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+      </button>
+      <button class="sidebar-float-btn sidebar-float-btn--right sidebar-open" type="button" title="切换大纲栏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+    </div>
+    <div class="caption">展开态：<b>文件夹栏</b>（窗口最左）+ <b>编辑区</b> + <b>大纲栏</b>（窗口最右），各自可拖宽</div>
+  </div>
+</div>
+
+<div class="note">
+  <p><b>本次改造要点</b></p>
+  <ul>
+    <li><b>文件夹栏移到窗口最左边</b>、<b>大纲栏移到窗口最右边</b>，取代原来的顶部「大纲 / 文件夹」二选一标签栏。</li>
+    <li>两栏<b>各自独立开合</b>：点击各自贴边的细长把手即可收起 / 展开，收起后只留贴边一条宽度 16px 的把手（accent 常亮）。</li>
+    <li>默认状态：<b>大纲栏展开</b>、<b>文件夹栏折叠</b>。</li>
+    <li>开合状态与两栏宽度分别写入 <code>settings.sidebarHidden</code> / <code>folderHidden</code> / <code>outlineWidth</code> / <code>folderWidth</code>（localStorage），关窗后再开原样恢复。</li>
+    <li>打开工作区自动展开左侧文件夹栏；打开 <code>.md</code> 自动展开右侧大纲栏（互不影响）。</li>
+  </ul>
+</div>
+</body>
+</html>

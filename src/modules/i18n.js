@@ -214,7 +214,8 @@
         this.updateOutline();
   
         // Toolbar / panel title attributes（2026-08-04 i18n 补漏）
-        setTitle('sidebar-float-btn', t('toggleSidebar'));
+        setTitle('folder-float-btn', t('toggleFolderPanel'));
+        setTitle('sidebar-float-btn', t('toggleOutlinePanel'));
         setTitle('btn-reload', t('reloadFile'));
         setTitle('btn-theme', t('toggleTheme'));
         setTitle('fmt-collapse', t('collapseExpandToolbar'));
@@ -223,8 +224,7 @@
         setTitle('folder-up', t('folderUp'));
         setTitle('files-header-open', t('openWorkspaceFolderTitle'));
         setTitle('folder-path', t('openContainingFolder'));
-        setTitle('sidebar-tab-outline', t('outline'));
-        setTitle('sidebar-tab-files', t('folder'));
+        setTitle('outline-header-title', t('outline'));
         // 文件目录排序下拉文案随语言刷新由 _folderSortSelect.applyI18n 统一处理（见下方 SETTINGS DROPDOWN OPTIONS）
         this.updateFolderSortOrderButton();
         this.updateFolderMenuLabel();

@@ -37,9 +37,12 @@
          clearTabsOnQuit: false, // 退出应用时不保存标签会话，下次打开总是空白
           showAllFiles: false, // 文件树过滤：默认只列受支持格式（markdown/image/text），true 时显示目录内全部文件
           toolbarCollapsed: false,
+          // 右侧大纲栏：sidebarHidden=true 表示收起。默认展开。
           sidebarHidden: false,
-          // 侧栏标签页：'outline'=大纲（默认），'files'=文件夹
-          sidebarTab: 'outline',
+          // 左侧文件夹栏：folderHidden=true 表示收起。默认折叠（用户要求），首次启动不占宽度。
+          folderHidden: true,
+          // 左侧文件夹栏宽度（与大纲栏各自独立记忆）
+          folderWidth: 240,
           // 大纲层级过滤：0=全部，1~6=仅显示到该层级
           outlineFilterLevel: 0,
           customFonts: [],

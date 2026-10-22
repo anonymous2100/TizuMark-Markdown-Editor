@@ -382,33 +382,10 @@
     </div>
 
     <main class="editor-container">
-<div id="outline-sidebar" class="outline-sidebar">
-        <!-- 顶部标签栏：大纲 / 文件夹（左右排列，同一时刻只显示一个面板） -->
-        <div id="sidebar-tabs" class="sidebar-tabs" role="tablist" aria-label="侧边栏面板">
-          <button id="sidebar-tab-outline" class="sidebar-tab active" type="button" role="tab" data-tab="outline" aria-selected="true" aria-controls="outline-panel" title="大纲">
-            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
-            <span class="sidebar-tab-label" data-i18n="outline">大纲</span>
-          </button>
-          <button id="sidebar-tab-files" class="sidebar-tab" type="button" role="tab" data-tab="files" aria-selected="false" aria-controls="folder-panel" title="文件夹">
-            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
-            <span class="sidebar-tab-label" data-i18n="folder">文件夹</span>
-          </button>
-        </div>
-        <!-- 标签页 1：大纲 -->
-        <div id="outline-panel" class="sidebar-tab-panel" data-panel="outline" role="tabpanel" aria-labelledby="sidebar-tab-outline">
-          <div class="outline-panel-header panel-header">
-            <span class="header-actions">
-              <div id="outline-filter" class="outline-filter"></div>
-              <span class="header-divider" aria-hidden="true"></span>
-              <button id="btn-all-outline" class="panel-action-btn" type="button" title="展开/折叠全部大纲" aria-label="展开或折叠全部大纲">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg>
-              </button>
-            </span>
-          </div>
-          <div id="outline-content" class="outline-content sidebar-panel"></div>
-        </div>
-        <!-- 标签页 2：文件夹 -->
-        <div id="folder-panel" class="sidebar-tab-panel hidden" data-panel="files" role="tabpanel" aria-labelledby="sidebar-tab-files">
+      <!-- 左右双栏布局：文件夹栏（窗口最左，默认折叠）→ 拖宽分隔器 → 编辑区 → 拖宽分隔器 → 大纲栏（窗口最右，默认展开）。
+           两侧各自独立开关、独立宽度；开合状态与宽度写入 settings（localStorage），关窗后下次启动原样恢复。 -->
+      <div id="folder-sidebar" class="outline-sidebar folder-sidebar hidden" aria-label="文件夹侧栏">
+        <div id="folder-panel" class="sidebar-tab-panel" data-panel="files" role="region" aria-label="文件夹">
           <div id="folder-content" class="folder-content sidebar-panel">
             <div class="files-panel-header panel-header">
               <span class="panel-title-group" id="files-header-open" title="选择/切换工作区文件夹">
@@ -436,7 +413,7 @@
           </div>
         </div>
       </div>
-      <div class="outline-resizer" id="outline-resizer"></div>
+      <div class="outline-resizer folder-resizer hidden" id="folder-resizer"></div>
        <div class="editor-column">
       <div id="large-file-banner" class="large-file-banner hidden" role="alert" aria-live="polite">
        <span id="large-file-banner-text"></span>
@@ -482,8 +459,31 @@
         </div>
         <div id="pane-loading" class="pane-loading hidden"><div class="pane-spinner"></div></div>
       </div>
-      <!-- 侧边栏吸附把手：贴在侧边栏分隔线上，关闭后吸附左缘常亮（点击开关侧边栏，updateSideButtons 定位） -->
-      <button id="sidebar-float-btn" class="sidebar-float-btn sidebar-open" type="button" title="切换侧边栏" aria-pressed="true" aria-label="切换侧边栏">
+      <!-- 右侧大纲栏（窗口最右，默认展开）：分隔器在栏体左侧，拖拽即调宽 -->
+      <div class="outline-resizer outline-right-resizer" id="outline-resizer"></div>
+      <div id="outline-sidebar" class="outline-sidebar outline-sidebar--right" aria-label="大纲侧栏">
+        <div id="outline-panel" class="sidebar-tab-panel" data-panel="outline" role="region" aria-label="大纲">
+          <div class="outline-panel-header panel-header">
+            <span class="panel-title-group" id="outline-header-title" title="大纲">
+              <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
+              <span class="panel-title" data-i18n="outline">大纲</span>
+            </span>
+            <span class="header-actions">
+              <div id="outline-filter" class="outline-filter"></div>
+              <span class="header-divider" aria-hidden="true"></span>
+              <button id="btn-all-outline" class="panel-action-btn" type="button" title="展开/折叠全部大纲" aria-label="展开或折叠全部大纲">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3 3-3 3"/></svg>
+              </button>
+            </span>
+          </div>
+          <div id="outline-content" class="outline-content sidebar-panel"></div>
+        </div>
+      </div>
+      <!-- 两侧吸附把手：骑在各自分隔线上；面板收起后吸附窗口边缘并 accent 常亮，点一下即展开 -->
+      <button id="folder-float-btn" class="sidebar-float-btn folder-float-btn" type="button" title="切换文件夹栏" aria-pressed="false" aria-label="切换文件夹栏">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+      </button>
+      <button id="sidebar-float-btn" class="sidebar-float-btn sidebar-float-btn--right sidebar-open" type="button" title="切换大纲栏" aria-pressed="true" aria-label="切换大纲栏">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
       </button>
       <div class="side-btn" id="btn-side-left" title="折叠编辑器">&#9664;</div>
@@ -549,7 +549,7 @@
           <div class="dependency-body about-version-body">
             <div class="about-app-line">
               <span class="about-app-name">TizuMark</span>
-              <span id="about-version" class="about-version-chip">TizuMark v1.2.4</span>
+              <span id="about-version" class="about-version-chip">TizuMark v1.2.6</span>
             </div>
             <p id="about-version-desc" class="about-version-desc">轻量级跨平台 Markdown 编辑器</p>
             <p id="about-build" class="about-build">基于 Tauri v2.5 + Rust 构建</p>

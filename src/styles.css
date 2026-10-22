@@ -1871,7 +1871,27 @@ body.is-resizing .side-btn {
 
 .outline-resizer:hover { background-color: var(--accent-color); }
 
-.outline-sidebar.hidden + .outline-resizer { display: none; }
+/* 拖宽分隔器：左右各一，所属面板收起时一并隐藏（由 JS 打 .hidden，避免依赖相邻兄弟顺序） */
+.outline-resizer.hidden { display: none; }
+
+/* 左侧文件夹栏：窗口最左，分隔线在右缘；右侧大纲栏：窗口最右，分隔线在左缘 */
+.outline-sidebar.folder-sidebar {
+  border-right: 1px solid var(--border-color);
+  border-left: none;
+}
+
+.outline-sidebar.outline-sidebar--right {
+  border-left: 1px solid var(--border-color);
+  border-right: none;
+}
+
+.outline-sidebar.folder-sidebar.hidden {
+  border-right-width: 0;
+}
+
+.outline-sidebar.outline-sidebar--right.hidden {
+  border-left-width: 0;
+}
 
 #preview-wrapper {
   flex: 1;
@@ -3787,9 +3807,9 @@ body.wysiwyg-table-dragging * { cursor: grabbing !important; user-select: none !
   color: var(--accent-text);
 }
 
-/* 侧边栏吸附把手：与既有「◀ 折叠编辑器」把手（.side-btn 16×50、左缘贴线向右伸、圆角朝右）
-   完全同款同锚，垂直方向在其上方 6px 处成组（top = 50% - 25px - 6px - 50px），构成整齐边缘控制列。
-   关闭后两侧手都落到左缘（left:0），把手转 accent 常亮作为显眼入口。 */
+/* 侧栏吸附把手：左右各一，与「◀ 折叠编辑器」把手（.side-btn 16×50）同款同高，
+   骑在各自分隔线上；面板收起后吸附窗口左/右缘并 accent 常亮，作为显眼的一键展开入口。
+   水平位置由 JS（updateSideButtons）按面板实际宽度写入 left / right。 */
 .sidebar-float-btn {
   position: absolute;
   top: calc(50% - 81px);
@@ -3802,11 +3822,9 @@ body.wysiwyg-table-dragging * { cursor: grabbing !important; user-select: none !
   padding: 0;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-left: none;
-  border-radius: 0 4px 4px 0;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: left 0.25s ease, background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  transition: left 0.25s ease, right 0.25s ease, background-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .sidebar-float-btn svg {
@@ -3820,11 +3838,34 @@ body.wysiwyg-table-dragging * { cursor: grabbing !important; user-select: none !
   color: var(--accent-text);
 }
 
-/* 关闭态：与 ◀ 把手一样吸附左缘，但 accent 常亮 → 显眼的“打开侧边栏”入口 */
+/* 左侧文件夹栏把手：圆角朝右（自左缘向右伸），骑在文件夹栏与编辑区之间的分隔线上 */
+.folder-float-btn {
+  left: 0;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+}
+
+/* 右侧大纲栏把手：圆角朝左（自右缘向左伸），骑在大纲栏与编辑区之间的分隔线上 */
+.sidebar-float-btn--right {
+  right: 0;
+  left: auto;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+}
+
+/* 收起态：把手贴住窗口对应边缘并 accent 常亮 → 显眼的“打开面板”入口 */
 .sidebar-float-btn:not(.sidebar-open) {
-  left: 0 !important;
   background-color: var(--accent-color);
   color: var(--accent-text);
+}
+
+.folder-float-btn:not(.sidebar-open) {
+  left: 0 !important;
+}
+
+.sidebar-float-btn--right:not(.sidebar-open) {
+  right: 0 !important;
+  left: auto !important;
 }
 
 .side-btn.side-hidden {
@@ -3867,60 +3908,8 @@ body.wysiwyg-table-dragging * { cursor: grabbing !important; user-select: none !
   padding: 8px 0;
 }
 
-/* ====== 侧栏标签栏：大纲 / 文件夹（左右排列） ====== */
-.sidebar-tabs {
-  display: flex;
-  align-items: stretch;
-  gap: 2px;
-  padding: 4px 6px 0;
-  flex-shrink: 0;
-  background-color: var(--bg-primary);
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
-}
-.sidebar-tab {
-  flex: 1 1 0;
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 4px 6px 5px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 4px 4px 0 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-size: calc(var(--ui-font-size) * 0.8462);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-}
-.sidebar-tab:hover {
-  background-color: var(--bg-hover, rgba(128, 128, 128, 0.1));
-  color: var(--text-primary);
-}
-.sidebar-tab.active {
-  color: var(--accent-color, #4a90d9);
-  background-color: var(--bg-hover, rgba(128, 128, 128, 0.08));
-  border-bottom-color: var(--accent-color, #4a90d9);
-}
-.sidebar-tab:focus-visible {
-  outline: 2px solid var(--accent-color, #4a90d9);
-  outline-offset: -2px;
-}
-.sidebar-tab-icon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-.sidebar-tab-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 标签页内容容器：同一时刻只有一个可见，独占侧栏剩余高度 */
+/* ====== 侧栏面板（原「大纲 / 文件夹」标签栏已取消，改为左右两个独立常驻面板） ====== */
+/* 面板内容容器：面板独占侧栏剩余高度 */
 .sidebar-tab-panel {
   flex: 1 1 auto;
   min-height: 0;

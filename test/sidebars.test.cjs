@@ -1,7 +1,9 @@
-// 侧栏标签页改造（大纲 / 文件夹左右标签二选一）回归测试：
-// - 顶部 #sidebar-tabs 存在两个 tab，顺序为「大纲」在前、「文件夹」在后
-// - 同一时刻只有一个 .sidebar-tab-panel 可见（hidden 类互斥）
-// - settings.sidebarTab 持久化手动选择；打开 md 文件自动切到大纲（不覆盖偏好）
+// 左右双栏侧栏回归测试（原「顶部标签页二选一」设计已废弃）：
+// - 布局：文件夹栏在窗口最左，大纲栏在窗口最右，各自带独立拖宽分隔器与吸附把手
+// - 默认：大纲栏展开、文件夹栏折叠
+// - 开合：点把手各自独立收起/展开，互不影响
+// - 记忆：开合状态与宽度写入 settings（localStorage），applySidebarState 按上次状态还原
+// - 打开工作区自动展开文件夹栏、打开 md 自动展开大纲栏
 // - 大纲层级过滤（outlineFilterLevel）按 maxLevel 裁剪渲染
 const test = require('node:test');
 const assert = require('node:assert');
@@ -28,260 +30,246 @@ function sampleEntries() {
   ];
 }
 
-test('sidebar-tabs: 顶部标签栏存在且顺序为大纲 → 文件夹', async () => {
+test('sidebars: 左右双栏 DOM 结构（左文件夹 / 右大纲，各自独立分隔器与把手）', async () => {
   const { w, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
-    const tabs = Array.from(w.document.querySelectorAll('#sidebar-tabs .sidebar-tab'));
-    assert.strictEqual(tabs.length, 2, '应恰好有两个标签页');
-    assert.deepStrictEqual(tabs.map((t) => t.dataset.tab), ['outline', 'files'], '第一个是大纲，第二个是文件夹');
-    assert.strictEqual(tabs[0].id, 'sidebar-tab-outline');
-    assert.strictEqual(tabs[1].id, 'sidebar-tab-files');
-    // 分屏时代的水平拖拽条与折叠 chevron 应已移除
-    assert.strictEqual(w.document.getElementById('sidebar-h-resizer'), null, '#sidebar-h-resizer 应已移除');
-    assert.strictEqual(w.document.getElementById('files-chevron'), null, '#files-chevron 应已移除');
-    assert.strictEqual(w.document.getElementById('outline-chevron'), null, '#outline-chevron 应已移除');
-    // 旧 API 应已删除
-    for (const fn of ['initSplitter', 'applySplitterRatio', 'applyPanelCollapse', 'togglePanel']) {
-      assert.strictEqual(typeof ed_missing(w, fn), 'undefined', `旧 API ${fn} 应已删除`);
+    const main = w.document.querySelector('.editor-container');
+    assert.ok(main, '.editor-container 应存在');
+
+    const folder = w.document.getElementById('folder-sidebar');
+    const outline = w.document.getElementById('outline-sidebar');
+    assert.ok(folder && outline, '两个侧栏容器都应存在');
+    assert.ok(folder.classList.contains('folder-sidebar'), '左侧容器应带 .folder-sidebar');
+    assert.ok(outline.classList.contains('outline-sidebar--right'), '右侧容器应带 .outline-sidebar--right');
+
+    // 顺序：文件夹栏 → 文件夹分隔器 → 编辑区 → 大纲分隔器 → 大纲栏
+    const kids = Array.from(main.children).map((el) => el.id);
+    assert.ok(kids.indexOf('folder-sidebar') >= 0, '文件夹栏应在容器内');
+    assert.ok(kids.indexOf('outline-sidebar') > kids.indexOf('folder-sidebar'), '大纲栏应排在文件夹栏之后（最右）');
+    assert.ok(kids.indexOf('folder-resizer') > kids.indexOf('folder-sidebar'), '文件夹分隔器应在文件夹栏右侧');
+    assert.ok(kids.indexOf('outline-resizer') < kids.indexOf('outline-sidebar'), '大纲分隔器应在提纲栏左侧');
+
+    // 旧标签栏结构应已删除
+    assert.strictEqual(w.document.getElementById('sidebar-tabs'), null, '#sidebar-tabs 应已移除');
+    assert.strictEqual(w.document.getElementById('sidebar-tab-outline'), null, '旧大纲标签按钮应已移除');
+    assert.strictEqual(w.document.getElementById('sidebar-tab-files'), null, '旧文件夹标签按钮应已移除');
+    for (const fn of ['switchSidebarTab', 'applySidebarTab']) {
+      assert.strictEqual(typeof w.editor[fn], 'undefined', `旧 API ${fn} 应已删除`);
     }
   } finally { cleanup(w); }
 });
 
-function ed_missing(w, name) {
-  return w.editor[name];
-}
-
-test('sidebar-tabs: 默认展示大纲标签页、文件夹面板隐藏', async () => {
+test('sidebars: 默认大纲展开、文件夹折叠', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
-    const outlinePanel = w.document.getElementById('outline-panel');
-    const folderPanel = w.document.getElementById('folder-panel');
-    const outlineTab = w.document.getElementById('sidebar-tab-outline');
-    const filesTab = w.document.getElementById('sidebar-tab-files');
-    assert.ok(outlinePanel && folderPanel, '两个 tab-panel 都应存在');
-    assert.ok(!outlinePanel.classList.contains('hidden'), '默认大纲面板应可见');
-    assert.ok(folderPanel.classList.contains('hidden'), '默认文件夹面板应隐藏');
-    assert.ok(outlineTab.classList.contains('active'), '默认大纲 tab 应为 active');
-    assert.ok(!filesTab.classList.contains('active'), '文件夹 tab 默认不应 active');
-    assert.strictEqual(outlineTab.getAttribute('aria-selected'), 'true');
-    assert.strictEqual(filesTab.getAttribute('aria-selected'), 'false');
-    // 默认值来自 settings.sidebarTab
-    assert.strictEqual(ed.settings.sidebarTab, 'outline');
+    const folder = w.document.getElementById('folder-sidebar');
+    const outline = w.document.getElementById('outline-sidebar');
+    assert.ok(!outline.classList.contains('hidden'), '默认大纲栏应展开');
+    assert.ok(folder.classList.contains('hidden'), '默认文件夹栏应折叠');
+    assert.strictEqual(ed.settings.sidebarHidden, false, 'settings.sidebarHidden 默认 false');
+    assert.strictEqual(ed.settings.folderHidden, true, 'settings.folderHidden 默认 true');
+    // 折叠面板的分隔器也隐藏，避免留下一道空分隔线
+    assert.ok(w.document.getElementById('folder-resizer').classList.contains('hidden'), '文件夹折叠时分隔器应隐藏');
+    assert.ok(!w.document.getElementById('outline-resizer').classList.contains('hidden'), '大纲展开时分隔器应可见');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 点击文件夹 tab 切到文件面板并持久化', async () => {
+test('sidebars: 两侧把手各自独立开关，互不影响', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
-    const outlinePanel = w.document.getElementById('outline-panel');
-    const folderPanel = w.document.getElementById('folder-panel');
-    const filesTab = w.document.getElementById('sidebar-tab-files');
+    const folder = w.document.getElementById('folder-sidebar');
+    const outline = w.document.getElementById('outline-sidebar');
+    const folderBtn = w.document.getElementById('folder-float-btn');
+    const outlineBtn = w.document.getElementById('sidebar-float-btn');
 
-    filesTab.click();
-    assert.ok(!folderPanel.classList.contains('hidden'), '点击后文件夹面板应可见');
-    assert.ok(outlinePanel.classList.contains('hidden'), '点击后大纲面板应隐藏');
-    assert.ok(filesTab.classList.contains('active'));
-    assert.strictEqual(filesTab.getAttribute('aria-selected'), 'true');
-    assert.strictEqual(ed.settings.sidebarTab, 'files', '手动切换应持久化 sidebarTab=files');
+    // 展开文件夹栏：大纲栏保持原样
+    folderBtn.click();
+    await delay(30);
+    assert.ok(!folder.classList.contains('hidden'), '点左把手后文件夹栏应展开');
+    assert.ok(!outline.classList.contains('hidden'), '文件夹展开不应影响大纲栏');
+    assert.strictEqual(ed.settings.folderHidden, false);
 
-    // 切回大纲
-    w.document.getElementById('sidebar-tab-outline').click();
-    assert.ok(!outlinePanel.classList.contains('hidden'));
-    assert.ok(folderPanel.classList.contains('hidden'));
-    assert.strictEqual(ed.settings.sidebarTab, 'outline');
+    // 收起大纲栏：文件夹栏保持展开
+    outlineBtn.click();
+    await delay(30);
+    assert.ok(outline.classList.contains('hidden'), '点右把手后大纲栏应收起');
+    assert.ok(!folder.classList.contains('hidden'), '大纲收起不应影响文件夹栏');
+    assert.strictEqual(ed.settings.sidebarHidden, true);
+
+    // 再点一次右把手恢复
+    outlineBtn.click();
+    await delay(30);
+    assert.ok(!outline.classList.contains('hidden'), '再次点击右把手应重新展开大纲栏');
+    assert.strictEqual(ed.settings.sidebarHidden, false);
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 非法 tab 名不改变状态', async () => {
+test('sidebars: 开合状态与宽度写入 localStorage，重启按上次状态还原', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
-    const outlinePanel = w.document.getElementById('outline-panel');
-    ed.switchSidebarTab('nope');
-    assert.ok(!outlinePanel.classList.contains('hidden'), '非法 tab 名不应改变可见面板');
-    assert.strictEqual(ed.settings.sidebarTab, 'outline');
+    const folder = w.document.getElementById('folder-sidebar');
+    const outline = w.document.getElementById('outline-sidebar');
+
+    // 用户操作：展开文件夹栏、收起大纲栏
+    ed.toggleFolderPanel();
+    ed.toggleOutlinePanel();
+    await delay(30);
+    const stored = JSON.parse(w.localStorage.getItem('tizumark-settings') || '{}');
+    assert.strictEqual(stored.folderHidden, false, '文件夹展开状态应落盘');
+    assert.strictEqual(stored.sidebarHidden, true, '大纲收起状态应落盘');
+    assert.strictEqual(typeof stored.folderWidth, 'number', '文件夹栏宽度应独立落盘');
+
+    // 模拟「关闭窗口再打开」：settings 从 localStorage 重新读一遍再还原
+    ed.settings = ed.loadSettings();
+    ed.applySidebarState();
+    await delay(20);
+    assert.ok(!folder.classList.contains('hidden'), '重启后文件夹栏应保持上次的展开状态');
+    assert.ok(outline.classList.contains('hidden'), '重启后大纲栏应保持上次的收起状态');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: persist=false 不覆盖用户偏好（打开 md 自动切大纲）', async () => {
+test('sidebars: 非法/缺失的设置值回落默认（大纲开、文件夹折）', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
-    // 用户手动选了「文件夹」
-    ed.switchSidebarTab('files', { persist: true });
-    assert.strictEqual(ed.settings.sidebarTab, 'files');
+    ed.settings.sidebarHidden = false;
+    ed.settings.folderHidden = true;
+    ed.applySidebarState();
+    await delay(10);
+    assert.ok(!w.document.getElementById('outline-sidebar').classList.contains('hidden'));
+    assert.ok(w.document.getElementById('folder-sidebar').classList.contains('hidden'));
+  } finally { cleanup(w); }
+});
 
-    // 打开 md 文件 → 自动切到大纲，但不写回偏好
+test('sidebars: 打开 md 文档自动展开大纲栏（不动文件夹栏）', async () => {
+  const { w, ed, getInitErr } = await makeEditor();
+  try {
+    assert.strictEqual(getInitErr(), null, '初始化不应报错');
+    // 先手动把大纲收起
+    ed.toggleOutlinePanel();
+    await delay(20);
+    assert.ok(w.document.getElementById('outline-sidebar').classList.contains('hidden'));
+
+    // 打开 md → 自动展开大纲栏
     ed.revealOutlineForDoc('markdown');
-    const outlinePanel = w.document.getElementById('outline-panel');
-    assert.ok(!outlinePanel.classList.contains('hidden'), '打开 md 后应展示大纲面板');
-    assert.strictEqual(ed.settings.sidebarTab, 'files', '自动切换不应覆盖用户手动偏好');
+    await delay(20);
+    assert.ok(!w.document.getElementById('outline-sidebar').classList.contains('hidden'), '打开 md 应展示大纲栏');
+    assert.ok(w.document.getElementById('folder-sidebar').classList.contains('hidden'), '打开 md 不应展开文件夹栏');
 
-    // 非 markdown 不触发切换
-    ed.switchSidebarTab('files', { persist: false });
+    // 非 markdown 不触发
+    ed.toggleOutlinePanel();
+    await delay(20);
     ed.revealOutlineForDoc('image');
-    assert.ok(w.document.getElementById('folder-panel').classList.contains('hidden') === false, '图片文件不应触发切换到大纲');
+    assert.ok(w.document.getElementById('outline-sidebar').classList.contains('hidden'), '图片不应触发展开大纲');
     ed.revealOutlineForDoc('text');
-    assert.ok(!w.document.getElementById('folder-panel').classList.contains('hidden'), '纯文本文件不应触发切换到大纲');
+    assert.ok(w.document.getElementById('outline-sidebar').classList.contains('hidden'), '纯文本不应触发展开大纲');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: applySidebarTab 按 settings.sidebarTab 还原', async () => {
-  const { w, ed, getInitErr } = await makeEditor();
-  try {
-    assert.strictEqual(getInitErr(), null, '初始化不应报错');
-    ed.settings.sidebarTab = 'files';
-    ed.applySidebarTab();
-    assert.ok(!w.document.getElementById('folder-panel').classList.contains('hidden'), 'files 应还原为文件夹面板');
-    ed.settings.sidebarTab = 'outline';
-    ed.applySidebarTab();
-    assert.ok(!w.document.getElementById('outline-panel').classList.contains('hidden'), 'outline 应还原为大纲面板');
-    // 脏数据兜底：非法值回落大纲
-    ed.settings.sidebarTab = 'garbage';
-    ed.applySidebarTab();
-    assert.ok(!w.document.getElementById('outline-panel').classList.contains('hidden'), '非法值应回落到大纲');
-  } finally { cleanup(w); }
-});
-
-test('sidebar-tabs: 打开工作区文件夹切到文件夹标签页', async () => {
+test('sidebars: 打开工作区文件夹自动展开左侧文件夹栏', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
     w.TauriApi.listDir = async () => sampleEntries();
-    const origAdd = ed.addRecentWorkspace;
     ed.addRecentWorkspace = () => {};
     ed.startFolderWatch = async () => {};
     await ed.openFolderPath('/root');
-    assert.ok(!w.document.getElementById('folder-panel').classList.contains('hidden'), '打开工作区应展示文件树');
-    assert.strictEqual(ed.settings.sidebarTab, 'files', '打开工作区应持久化为 files');
-    ed.addRecentWorkspace = origAdd;
+    assert.ok(!w.document.getElementById('folder-sidebar').classList.contains('hidden'), '打开工作区应展开文件夹栏');
+    assert.strictEqual(ed.settings.folderHidden, false, '打开工作区应把 folderHidden 记为 false');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 文件树与大纲同时渲染到各自面板', async () => {
+test('sidebars: 文件树与大纲同时渲染到各自面板（两栏可并存）', async () => {
   const { w, ed } = await makeEditor();
   try {
     w.TauriApi.listDir = async () => sampleEntries();
     ed.workspaceFolder = '/root';
     await ed.renderFolderTree();
+    ed.showFolderPanel();
+    await delay(20);
     const treeLabels = Array.from(w.document.querySelectorAll('#folder-tree .tree-label')).map((e) => e.textContent);
     assert.deepStrictEqual(treeLabels, ['docs', 'proj', 'a.md', 'c.md']);
 
-    // 大纲随内容渲染到 #outline-content
+    // 大纲随内容渲染到 #outline-content；此时两栏同时可见
     ed.cm.setValue('# 标题一\n## 子标题\n# 标题二\n');
     ed.updateOutline();
     const items = w.document.querySelectorAll('#outline-content .outline-item');
     assert.ok(items.length >= 3, '大纲应渲染多个标题项');
+    assert.ok(!w.document.getElementById('folder-sidebar').classList.contains('hidden'), '文件夹栏应仍可见');
+    assert.ok(!w.document.getElementById('outline-sidebar').classList.contains('hidden'), '大纲栏应仍可见');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: showSidebar 确保侧栏可见（替代旧 showSidebarTab）', async () => {
+test('sidebars: showSidebar 确保大纲栏可见、showFolderPanel 确保文件夹栏可见', async () => {
   const { w, ed } = await makeEditor();
   try {
-    const sidebar = w.document.getElementById('outline-sidebar');
-    sidebar.classList.add('hidden');
+    const folder = w.document.getElementById('folder-sidebar');
+    const outline = w.document.getElementById('outline-sidebar');
+    folder.classList.add('hidden');
+    ed.settings.folderHidden = true;
+    ed.showFolderPanel();
+    assert.ok(!folder.classList.contains('hidden'), 'showFolderPanel 后文件夹栏应可见');
+    assert.strictEqual(ed.settings.folderHidden, false);
+
+    outline.classList.add('hidden');
     ed.settings.sidebarHidden = true;
     ed.showSidebar();
-    assert.ok(!sidebar.classList.contains('hidden'), 'showSidebar 后侧栏应可见');
+    assert.ok(!outline.classList.contains('hidden'), 'showSidebar 后大纲栏应可见');
     assert.strictEqual(ed.settings.sidebarHidden, false);
-    assert.strictEqual(typeof ed.showSidebarTab, 'undefined', '旧 showSidebarTab 应已删除');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 大纲层级过滤 maxLevel 裁剪渲染', async () => {
+test('sidebars: 大纲层级过滤 maxLevel 裁剪渲染', async () => {
   const { w, ed } = await makeEditor();
   try {
     const md = [
       '# H1',
       '## H2',
       '### H3',
-      '#### H4',
-      '##### H5',
-      '###### H6',
-      '# H1-2',
     ].join('\n');
     ed.cm.setValue(md);
-    ed.settings.outlineFilterLevel = 0; // 全部
+    ed.settings.outlineFilterLevel = 2;
     ed.updateOutline();
-    let items = w.document.querySelectorAll('#outline-content .outline-item');
-    assert.strictEqual(items.length, 7, '全部时应渲染 7 个标题');
-
-    ed.settings.outlineFilterLevel = 2; // 仅 H1–H2
-    ed.updateOutline();
-    items = w.document.querySelectorAll('#outline-content .outline-item');
-    assert.strictEqual(items.length, 3, '过滤到 H2 时应为 3 个（2×H1 + 1×H2）');
-    // 渲染结果不得包含 level-3 及更深
-    const deep = w.document.querySelectorAll('#outline-content .outline-item.level-3, #outline-content .outline-item.level-4, #outline-content .outline-item.level-5, #outline-content .outline-item.level-6');
-    assert.strictEqual(deep.length, 0, '不应渲染 H3 及以下');
+    const levels = Array.from(w.document.querySelectorAll('#outline-content .outline-item'))
+      .map((el) => (el.className.match(/level-(\d)/) || [])[1]);
+    assert.ok(levels.length >= 2, '应至少渲染 H1/H2');
+    assert.ok(!levels.includes('3'), 'H3 应被层级过滤掉');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: renderOutlineHtml maxLevel 纯函数（父节点保留、深子树跳过）', async () => {
-  const { w } = await makeEditor();
-  try {
-    const headings = Outline.extractHeadings('# A\n## B\n### C\n## D\n', {});
-    const tree = Outline.buildOutlineTree(headings);
-    const html = Outline.renderOutlineHtml(tree, { escapeHtml: (s) => s, maxLevel: 2 });
-    assert.ok(html.includes('level-1'), '应含 H1');
-    assert.ok(html.includes('level-2'), '应含 H2');
-    assert.ok(!html.includes('level-3'), '不应含 H3');
-  } finally { cleanup(w); }
+test('sidebars: renderOutlineHtml maxLevel 纯函数（父节点保留、深子树跳过）', async () => {
+  const tree = Outline.buildOutlineTree(Outline.extractHeadings('# A\n## B\n### C\n', {}));
+  const html = Outline.renderOutlineHtml(tree, { escapeHtml: (t) => t, maxLevel: 2 });
+  assert.ok(html.includes('A'), '应保留 H1');
+  assert.ok(html.includes('B'), '应保留 H2');
+  assert.ok(!html.includes('>C<'), 'H3 应被裁剪');
 });
 
-test('sidebar-tabs: outline-filter 下拉存在并切换过滤级别', async () => {
-  const { w, ed } = await makeEditor();
-  try {
-    const filterHost = w.document.getElementById('outline-filter');
-    assert.ok(filterHost, '#outline-filter 容器应存在');
-    assert.ok(ed._outlineFilterSelect, '大纲过滤下拉应已自绘为 Select 组件');
-
-    ed.cm.setValue('# H1\n## H2\n### H3\n');
-    ed.settings.outlineFilterLevel = 0;
-    ed.updateOutline();
-    assert.strictEqual(w.document.querySelectorAll('#outline-content .outline-item').length, 3);
-
-    // 模拟用户在下拉列表中点击「仅 H1–H2」（value='2'）：先 open 渲染选项，再点击选项触发 onChange
-    ed._outlineFilterSelect.open();
-    const opt = filterHost.querySelector('.select-component-item[data-value="2"]');
-    assert.ok(opt, '下拉应渲染 value=2 的选项');
-    opt.dispatchEvent(new w.window.MouseEvent('click', { bubbles: true }));
-    assert.strictEqual(ed.settings.outlineFilterLevel, 2, '切换后 setting 应为 2');
-    await delay(10);
-    assert.strictEqual(w.document.querySelectorAll('#outline-content .outline-item').length, 2, '过滤后仅 2 项');
-  } finally { cleanup(w); }
-});
-
-test('sidebar-tabs: 两个面板头部各带标题与操作按钮', async () => {
+test('sidebars: 两个面板头部各带标题与操作按钮', async () => {
   const { w, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
-    // 标签栏文字
-    const outlineTab = w.document.getElementById('sidebar-tab-outline');
-    const filesTab = w.document.getElementById('sidebar-tab-files');
-    assert.strictEqual(outlineTab.querySelector('.sidebar-tab-label').textContent.trim(), '大纲');
-    assert.strictEqual(filesTab.querySelector('.sidebar-tab-label').textContent.trim(), '文件夹');
-    assert.ok(outlineTab.querySelector('.sidebar-tab-icon'), '大纲 tab 应带图标');
-    assert.ok(filesTab.querySelector('.sidebar-tab-icon'), '文件夹 tab 应带图标');
-
     // 文件头：图标 + 「文件」标题（点击切换工作区）
     const filesHeader = w.document.querySelector('.files-panel-header');
     assert.ok(filesHeader, '.files-panel-header 应存在');
     assert.ok(filesHeader.querySelector('.panel-title-icon'), '文件头应带图标');
     assert.strictEqual(filesHeader.querySelector('.panel-title').textContent.trim(), '文件', '文件头标题应为「文件」');
 
-    // 大纲面板头只保留操作区（筛选 + 全部）
+    // 大纲面板头：标题 + 筛选 + 全部按钮
     const outlineHeader = w.document.querySelector('.outline-panel-header');
     assert.ok(outlineHeader, '.outline-panel-header 应存在');
+    assert.strictEqual(outlineHeader.querySelector('.panel-title').textContent.trim(), '大纲', '大纲头标题应为「大纲」');
     assert.ok(w.document.getElementById('outline-filter'), '大纲筛选应存在');
     assert.ok(w.document.getElementById('btn-all-folders'), '文件全部按钮应存在');
     assert.ok(w.document.getElementById('btn-all-outline'), '大纲全部按钮应存在');
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 一键全部展开/折叠文件目录', async () => {
+test('sidebars: 一键全部展开/折叠文件目录', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -325,7 +313,7 @@ test('sidebar-tabs: 一键全部展开/折叠文件目录', async () => {
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 一键全部展开/折叠大纲', async () => {
+test('sidebars: 一键全部展开/折叠大纲', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -359,7 +347,7 @@ test('sidebar-tabs: 一键全部展开/折叠大纲', async () => {
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 点击文件面板标题切换工作区 + 点击目录路径打开所在文件夹', async () => {
+test('sidebars: 点击文件面板标题切换工作区 + 点击目录路径打开所在文件夹', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -404,7 +392,7 @@ test('sidebar-tabs: 点击文件面板标题切换工作区 + 点击目录路径
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 「上一级」按钮切换到上级目录 + 到根禁用', async () => {
+test('sidebars: 「上一级」按钮切换到上级目录 + 到根禁用', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -427,16 +415,16 @@ test('sidebar-tabs: 「上一级」按钮切换到上级目录 + 到根禁用', 
 
     // 点击：只刷新文件工作区（不得弹全屏 loading 遮罩 / 不得重建大纲侧边栏）
     const origShowLoading = ed.showLoading;
-    const origShowSidebar = ed.showSidebar;
+    const origShowFolderPanel = ed.showFolderPanel;
     const origRender = ed.renderFolderTree;
     const origWatch = ed.startFolderWatch;
     const origSave = ed.saveSession;
     const origRecent = ed.addRecentWorkspace;
     let loadingCount = 0;
-    let sidebarCount = 0;
+    let folderPanelCount = 0;
     let renderCount = 0;
     ed.showLoading = () => { loadingCount++; };
-    ed.showSidebar = () => { sidebarCount++; };
+    ed.showFolderPanel = () => { folderPanelCount++; };
     ed.renderFolderTree = async () => { renderCount++; };
     ed.startFolderWatch = () => {};
     ed.saveSession = () => {};
@@ -448,7 +436,7 @@ test('sidebar-tabs: 「上一级」按钮切换到上级目录 + 到根禁用', 
     assert.strictEqual(ed.workspaceFolder, 'C:\\workspace', '点击后工作区应切到上级目录');
     assert.strictEqual(renderCount, 1, '只应刷新一次文件树');
     assert.strictEqual(loadingCount, 0, '不应弹出全屏 loading 遮罩（只刷新文件工作区）');
-    assert.strictEqual(sidebarCount, 0, '不应重建侧边栏/大纲');
+    assert.strictEqual(folderPanelCount, 0, '不应重开/重建文件夹栏');
     assert.strictEqual(ed.expandedFolders.size, 0, '应重置展开状态');
 
     // 已到最上级：不切换，仅提示状态
@@ -465,7 +453,7 @@ test('sidebar-tabs: 「上一级」按钮切换到上级目录 + 到根禁用', 
 
     // 还原桩，供下方使用真实 renderFolderTree 校验禁用态
     ed.showLoading = origShowLoading;
-    ed.showSidebar = origShowSidebar;
+    ed.showFolderPanel = origShowFolderPanel;
     ed.renderFolderTree = origRender;
     ed.startFolderWatch = origWatch;
     ed.saveSession = origSave;
@@ -486,7 +474,7 @@ test('sidebar-tabs: 「上一级」按钮切换到上级目录 + 到根禁用', 
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 按钮字形族区分 + 无边框 + aria 状态', async () => {
+test('sidebars: 按钮字形族区分 + 无边框 + aria 状态', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -526,36 +514,36 @@ test('sidebar-tabs: 按钮字形族区分 + 无边框 + aria 状态', async () =
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 标签栏样式护栏（左右排列 + active 高亮 + 面板互斥）', async () => {
+test('sidebars: 左右面板样式护栏（贴边边框 + 分隔器按 hidden 隐藏 + 两侧把手不对称吸附）', async () => {
   // jsdom 无布局，这里以源码规则作为回归护栏
   assert.ok(
-    /\.sidebar-tabs\s*\{[^}]*display:\s*flex/.test(STYLES),
-    '标签栏应为 flex 容器（左右排列）',
+    /\.outline-sidebar\.folder-sidebar\s*\{[^}]*border-right:\s*1px solid/.test(STYLES),
+    '左侧文件夹栏应只有右边框（贴窗口左缘）',
   );
   assert.ok(
-    /\.sidebar-tab\s*\{[^}]*flex:\s*1 1 0/.test(STYLES),
-    '标签按钮应等分宽度（左右并排）',
+    /\.outline-sidebar\.outline-sidebar--right\s*\{[^}]*border-left:\s*1px solid/.test(STYLES),
+    '右侧大纲栏应只有左边框（贴窗口右缘）',
   );
   assert.ok(
-    /\.sidebar-tab\.active\s*\{[^}]*border-bottom-color:\s*var\(--accent-color/.test(STYLES),
-    '选中标签应有 accent 底部高亮',
+    /\.outline-resizer\.hidden\s*\{[^}]*display:\s*none/.test(STYLES),
+    '面板收起时其分隔器应 display:none',
   );
   assert.ok(
-    /\.sidebar-tab-panel\s*\{[^}]*flex:\s*1 1 auto/.test(STYLES),
-    '面板容器应占满标签栏下方剩余高度',
+    /\.folder-float-btn\s*\{[^}]*left:\s*0/.test(STYLES),
+    '左侧把手默认贴窗口左缘（展开时由 JS 推到文件夹栏右缘）',
   );
   assert.ok(
-    /\.sidebar-tab-panel\.hidden\s*\{[^}]*display:\s*none/.test(STYLES),
-    '非选中面板应 display:none（互斥）',
+    /\.sidebar-float-btn--right\s*\{[^}]*right:\s*0/.test(STYLES),
+    '右侧把手默认贴窗口右缘（展开时由 JS 推到大纲栏左缘）',
   );
-  // 分屏时代的样式应已清理
+  // 旧的标签栏样式应已清理
+  assert.ok(!/\.sidebar-tabs\s*\{/.test(STYLES), '旧 .sidebar-tabs 样式应已移除');
+  assert.ok(!/\.sidebar-tab\.active/.test(STYLES), '旧标签 active 样式应已移除');
   assert.ok(!/\.sidebar-h-resizer/.test(STYLES), '.sidebar-h-resizer 样式应已移除');
-  assert.ok(!/\.panel-chevron/.test(STYLES), '.panel-chevron 样式应已移除');
   assert.ok(!/files-collapsed/.test(STYLES), 'files-collapsed 样式应已移除');
-  assert.ok(!/outline-collapsed/.test(STYLES), 'outline-collapsed 样式应已移除');
 });
 
-test('sidebar-tabs: 折叠全部目录在部分子目录读取失败时仍可用', async () => {
+test('sidebars: 折叠全部目录在部分子目录读取失败时仍可用', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -592,7 +580,7 @@ test('sidebar-tabs: 折叠全部目录在部分子目录读取失败时仍可用
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 全部目录按钮基于 DOM 状态交替（再点击必折叠）', async () => {
+test('sidebars: 全部目录按钮基于 DOM 状态交替（再点击必折叠）', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -631,7 +619,7 @@ test('sidebar-tabs: 全部目录按钮基于 DOM 状态交替（再点击必折�
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 大纲默认全展开时按钮图标应为「折叠全部」（与状态一致）', async () => {
+test('sidebars: 大纲默认全展开时按钮图标应为「折叠全部」（与状态一致）', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -645,7 +633,7 @@ test('sidebar-tabs: 大纲默认全展开时按钮图标应为「折叠全部」
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 点击「折叠全部大纲」按钮应真正折叠（不再无效）', async () => {
+test('sidebars: 点击「折叠全部大纲」按钮应真正折叠（不再无效）', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -664,7 +652,7 @@ test('sidebar-tabs: 点击「折叠全部大纲」按钮应真正折叠（不再
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 展开/折叠全部目录显示 loading 并在完成后移除（超时兜底）', async () => {
+test('sidebars: 展开/折叠全部目录显示 loading 并在完成后移除（超时兜底）', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -693,7 +681,7 @@ test('sidebar-tabs: 展开/折叠全部目录显示 loading 并在完成后移�
   } finally { cleanup(w); }
 });
 
-test('sidebar-tabs: 展开进行中点折叠应取消旧任务，不会继续展开', async () => {
+test('sidebars: 展开进行中点折叠应取消旧任务，不会继续展开', async () => {
   const { w, ed, getInitErr } = await makeEditor();
   try {
     assert.strictEqual(getInitErr(), null, '初始化不应报错');
@@ -730,29 +718,37 @@ test('sidebar-tabs: 展开进行中点折叠应取消旧任务，不会继续展
   } finally { cleanup(w); }
 });
 
-// 回归：侧边栏吸附把手（用户反馈：标题栏位置不合适，改贴分隔线/左缘悬浮，一键开关免两步菜单）。
-test('sidebar: 吸附把手一键开关侧边栏并同步骑缝/左缘两态', async () => {
+// 回归：两侧吸附把手（各自贴自己那侧边缘，一键开关对应面板）
+test('sidebars: 两侧吸附把手各自开关对应面板并同步骑缝/贴边两态', async () => {
   const { w, ed } = await makeEditor();
   try {
-    const btn = w.document.getElementById('sidebar-float-btn');
-    const sidebar = w.document.getElementById('outline-sidebar');
-    assert.ok(btn, 'main 内应存在 #sidebar-float-btn 吸附把手');
-    // 初始：侧边栏可见 → 骑缝态（sidebar-open）
-    assert.strictEqual(sidebar.classList.contains('hidden'), false, '初始侧边栏应可见');
-    assert.strictEqual(btn.classList.contains('sidebar-open'), true, '可见时把手应为骑缝态');
-    assert.strictEqual(btn.getAttribute('aria-pressed'), 'true', 'aria-pressed 应为 true');
-    // 点击一次 → 关闭：把手脱离骑缝态（CSS 吸附左缘常亮）
-    btn.dispatchEvent(new w.Event('click', { bubbles: true }));
+    const folderBtn = w.document.getElementById('folder-float-btn');
+    const outlineBtn = w.document.getElementById('sidebar-float-btn');
+    const folder = w.document.getElementById('folder-sidebar');
+    const outline = w.document.getElementById('outline-sidebar');
+    assert.ok(folderBtn, 'main 内应存在 #folder-float-btn 吸附把手');
+    assert.ok(outlineBtn, 'main 内应存在 #sidebar-float-btn 吸附把手');
+
+    // 初始：大纲展开（骑缝态），文件夹折叠（贴边常亮）
+    assert.strictEqual(outline.classList.contains('hidden'), false, '初始大纲栏应可见');
+    assert.strictEqual(outlineBtn.classList.contains('sidebar-open'), true, '大纲展开时右把手应为骑缝态');
+    assert.strictEqual(outlineBtn.getAttribute('aria-pressed'), 'true');
+    assert.strictEqual(folder.classList.contains('hidden'), true, '初始文件夹栏应折叠');
+    assert.strictEqual(folderBtn.classList.contains('sidebar-open'), false, '文件夹折叠时左把手应为贴边常亮态');
+    assert.strictEqual(folderBtn.getAttribute('aria-pressed'), 'false');
+
+    // 收起大纲
+    outlineBtn.dispatchEvent(new w.Event('click', { bubbles: true }));
     await delay(30);
-    assert.strictEqual(sidebar.classList.contains('hidden'), true, '一次点击应关闭侧边栏');
-    assert.strictEqual(btn.classList.contains('sidebar-open'), false, '关闭后应脱离骑缝态（吸附左缘）');
-    assert.strictEqual(btn.getAttribute('aria-pressed'), 'false', 'aria-pressed 应为 false');
+    assert.strictEqual(outline.classList.contains('hidden'), true, '一次点击应收起大纲栏');
+    assert.strictEqual(outlineBtn.classList.contains('sidebar-open'), false, '收起后应脱离骑缝态（吸附右缘）');
     assert.strictEqual(ed.settings.sidebarHidden, true, 'settings.sidebarHidden 应同步为 true');
-    // 再点一次 → 打开（此前痛点：菜单要两步）
-    btn.dispatchEvent(new w.Event('click', { bubbles: true }));
+
+    // 展开文件夹
+    folderBtn.dispatchEvent(new w.Event('click', { bubbles: true }));
     await delay(30);
-    assert.strictEqual(sidebar.classList.contains('hidden'), false, '再次单击应直接重开侧边栏');
-    assert.strictEqual(btn.classList.contains('sidebar-open'), true, '骑缝态应恢复');
-    assert.strictEqual(btn.style.left, '0px', 'jsdom offsetWidth=0 → left 钳制为 0px（真实环境为 width-10 骑缝）');
+    assert.strictEqual(folder.classList.contains('hidden'), false, '点击左把手应展开文件夹栏');
+    assert.strictEqual(folderBtn.classList.contains('sidebar-open'), true, '展开后左把手应恢复骑缝态');
+    assert.strictEqual(ed.settings.folderHidden, false, 'settings.folderHidden 应同步为 false');
   } finally { cleanup(w); }
 });

@@ -1,4 +1,4 @@
-# TizuMark User Guide
+﻿# TizuMark User Guide
 
 > A fast, elegant Markdown editor — from basics to mastery
 
@@ -15,7 +15,7 @@ TizuMark's interface has four main areas:
 | Area | Position | Purpose |
 |------|----------|---------|
 | **Top Toolbar** | Top | File operations, quick insert, view modes, theme, help |
-| **Sidebar** | Left | Outline navigation & file tree (when a folder is open) |
+| **Sidebars** | Folders left / Outline right | Outline navigation & file tree (when a folder is open); each side collapses independently |
 | **Editor** | Center | CodeMirror with Markdown syntax highlighting and auto-closing brackets / quotes |
 | **Preview** | Right | Live-rendered Markdown with scroll sync |
 
@@ -54,12 +54,20 @@ In Source Mode:
 | Collapse preview | Click right <kbd>►</kbd> button |
 | Resize panes | Drag the middle divider |
 
-### Sidebar: Outline & Files
+### Sidebars: Folders (left) & Outline (right)
 
-Click the **floating toggle button on the left edge of the sidebar**, or use the "Toggle Sidebar" shortcut (rebindable in Keyboard Shortcuts), to show or hide the sidebar. It has two tabs:
+The sidebar is split into **two independent panels**: **Folders** on the far left of the window, **Outline** on the far right. Each has a slim floating handle sitting on its own divider:
 
-- **Outline**: Automatically shows the document heading structure (H1–H6), indented by level. **Click any heading** — the preview jumps and centers on it. The outline updates in real time as you edit.
-- **Files**: After opening a directory with `File → Open Folder`, this tab shows a tree view of files in that directory. Click a file to open it in a tab. The tree watches the folder for external additions/removals and refreshes automatically.
+- Click the left handle to collapse / expand **Folders**; click the right handle to collapse / expand **Outline** — they are independent.
+- When collapsed the panel is fully hidden and only a 16px handle stays on the window edge (highlighted), click it to expand.
+- **Defaults: Outline expanded, Folders collapsed.**
+- Each panel's open/closed state and width are remembered, so **reopening the window restores exactly what you had**.
+- Drag the inner divider of either panel to resize it (80–500px).
+- Opening a workspace folder expands the left Folders panel; opening a Markdown document expands the right Outline panel.
+
+**Outline**: Automatically shows the document heading structure (H1–H6), indented by level. **Click any heading** — the preview jumps and centers on it. The outline updates in real time as you edit.
+
+**Files**: After opening a directory with `File → Open Folder`, this panel shows a tree view of files in that directory. Click a file to open it in a tab. The tree watches the folder for external additions/removals and refreshes automatically.
 
 ### Multi-Tab Editing
 
@@ -480,7 +488,7 @@ Ensure image accessibility. Use relative paths for local files, check network fo
 
 ### How to manage a whole folder of files?
 
-`File → Open Folder` opens a directory; the sidebar "Files" tab shows a tree view. Click to open files, and it auto-refreshes on external changes.
+`File → Open Folder` opens a directory; the left "Folders" panel shows a tree view. Click to open files, and it auto-refreshes on external changes.
 
 ### How to contact us?
 

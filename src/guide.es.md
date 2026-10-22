@@ -15,7 +15,7 @@ La interfaz de TizuMark consta de cuatro áreas principales:
 | Área | Posición | Propósito |
 |------|----------|-----------|
 | **Barra de herramientas superior** | Superior | Operaciones con archivos, inserción rápida, modos de vista, temas, ayuda |
-| **Barra lateral** | Izquierda | Navegación por esquema y árbol de archivos (al abrir una carpeta) |
+| **Barras laterales** | Archivos a la izquierda / Esquema a la derecha | Navegación por esquema y árbol de archivos (al abrir una carpeta); cada lado se contrae de forma independiente |
 | **Editor** | Centro | CodeMirror con resaltado de sintaxis Markdown y autocierre de corchetes / comillas |
 | **Vista previa** | Derecha | Markdown renderizado en tiempo real con sincronización de desplazamiento |
 
@@ -54,12 +54,20 @@ En modo código:
 | Contraer vista previa | Clic en el botón derecho <kbd>►</kbd> |
 | Redimensionar paneles | Arrastra el divisor central |
 
-### Barra lateral: Esquema y Archivos
+### Barras laterales: Archivos (izquierda) y Esquema (derecha)
 
-Haz clic en el **botón flotante en el borde izquierdo de la barra lateral**, o usa el atajo «Alternar barra lateral» (personalizable en los atajos de teclado), para mostrar u ocultar la barra lateral. Cuenta con dos pestañas:
+La barra lateral se divide en **dos paneles independientes**: **Archivos** en el extremo izquierdo de la ventana y **Esquema** en el extremo derecho. Cada uno tiene un asa flotante delgada sobre su propio divisor:
 
-- **Esquema**: Muestra automáticamente la estructura de títulos del documento (H1–H6), indentada por niveles. **Haz clic en cualquier título**: la vista previa se desplaza y centra en él inmediatamente. El esquema se actualiza en tiempo real mientras escribes.
-- **Archivos**: Tras abrir un directorio con `Archivo → Abrir carpeta`, esta pestaña presenta un árbol de archivos. Haz clic en cualquier archivo para abrirlo en una pestaña. El árbol monitorea la carpeta en busca de adiciones o eliminaciones externas y se actualiza de forma automática.
+- Clic en el asa izquierda para contraer / expandir **Archivos**; clic en el asa derecha para **Esquema**; son independientes.
+- Al contraerse el panel se oculta por completo y solo queda un asa de 16px en el borde (resaltada); un clic la expande.
+- **Estado por defecto: Esquema expandido, Archivos contraído.**
+- El estado abierto/cerrado y el ancho de cada panel se recuerdan, así que **al reabrir la ventana todo vuelve como lo dejaste**.
+- Arrastra el divisor interior de cada panel para ajustar su ancho (80–500px).
+- Al abrir una carpeta de trabajo se expande el panel izquierdo de Archivos; al abrir un documento Markdown se expande el panel derecho de Esquema.
+
+**Esquema**: Muestra automáticamente la estructura de títulos del documento (H1–H6), indentada por niveles. **Haz clic en cualquier título**: la vista previa se desplaza y centra en él inmediatamente. El esquema se actualiza en tiempo real mientras escribes.
+
+**Archivos**: Tras abrir un directorio con `Archivo → Abrir carpeta`, este panel presenta un árbol de archivos. Haz clic en cualquier archivo para abrirlo en una pestaña. El árbol monitorea la carpeta en busca de adiciones o eliminaciones externas y se actualiza de forma automática.
 
 ### Edición multipestaña
 

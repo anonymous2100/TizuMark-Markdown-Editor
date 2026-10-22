@@ -281,12 +281,12 @@
           this._endPaneLoad();
         }
       },
-      // 打开 Markdown 文档后把侧栏切到「大纲」标签页：文档主体打开即意味着用户要看结构，
-      // 大纲是该文档最直接的导航。仅 markdown 生效（text 无标题树，image 更无），
-      // 且 persist=false —— 不覆盖用户手动选中的标签，下次启动仍按其偏好还原。
+      // 打开 Markdown 文档后确保「大纲」栏可见：文档主体打开即意味着用户要看结构，
+      // 大纲是该文档最直接的导航。仅 markdown 生效（text 无标题树，image 更无）。
+      // 只展开右侧大纲栏，不动左侧文件夹栏（两者独立，用户可同时开）。
       revealOutlineForDoc(kind) {
         if (kind !== 'markdown') return;
-        this.switchSidebarTab('outline', { persist: false });
+        this.showSidebar();
       },
       // 非 Markdown 明文文件：按扩展名选择 CodeMirror 语法高亮模式（仅高亮，不改变编辑行为）
       _applyCodeMode(ext) {
@@ -327,9 +327,8 @@
           this.workspaceFolder = folderPath;
           this.expandedFolders = new Set();
           await this.renderFolderTree();
-          this.showSidebar();
-          // 打开工作区的动作本身就是「我要看文件树」→ 切到文件夹标签页（记入偏好）
-          this.switchSidebarTab('files', { persist: true });
+          // 打开工作区的动作本身就是「我要看文件树」→ 展开左侧文件夹栏（状态写入设置，下次启动保持）
+          this.showFolderPanel();
           this.startFolderWatch();
           this.saveSession();
           this.addRecentWorkspace(folderPath);

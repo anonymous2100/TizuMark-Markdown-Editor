@@ -227,8 +227,8 @@ class MarkdownEditor {
     this._bindMenuAction('btn-save', () => this.saveFile(), F);
     this._bindMenuAction('btn-save-as', () => this.saveAsFile(), F);
     this._bindMenuAction('btn-reload', () => this.reloadFile());
-    // 侧边栏吸附把手（贴分隔线/左缘）：一键开关侧边栏（原「视图 → 侧边栏」菜单已移除）
-    this._bindMenuAction('sidebar-float-btn', () => this.toggleSidebar());
+    // 左右侧栏吸附把手（#folder-float-btn / #sidebar-float-btn）的点击绑定在市局 modules/layout.js
+    // 的 initSidebarTabs()，这里不再重复绑定（重复会导致一次点击开关两次、看起来「点了没反应」）。
     this._bindMenuAction('btn-reload-menu', () => this.reloadFile(), F);
     this._bindMenuAction('btn-export-html', () => this.exportHTML(), F);
     this._bindMenuAction('btn-export-img', () => this.exportImage(), F);
