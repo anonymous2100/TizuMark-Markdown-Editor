@@ -6,8 +6,8 @@ const path = require('path');
 const { VERSION, notesLines } = require('./release-notes');
 
 const ROOT = path.resolve(__dirname, '..');
-const NSIS_SIG = path.join(ROOT, 'release', `TizuMark_${VERSION}_x64-setup.exe.sig`);
-const URL = `https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v${VERSION}/TizuMark_${VERSION}_x64-setup.exe`;
+const NSIS_SIG = path.join(ROOT, 'release', `TuziMark_${VERSION}_x64-setup.exe.sig`);
+const URL = `https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v${VERSION}/TuziMark_${VERSION}_x64-setup.exe`;
 
 if (!fs.existsSync(NSIS_SIG)) {
   console.error('MISSING NSIS .sig: ' + NSIS_SIG);

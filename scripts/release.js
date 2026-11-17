@@ -82,9 +82,9 @@ function uploadFile(releaseId, filePath) {
   // 附件路径基于脚本位置解析（历史：硬编码 D:/project/... 绝对路径，换机器即坏）
   const releaseDir = path.resolve(__dirname, '..', 'release');
   const files = [
-    path.join(releaseDir, `TizuMark_${VERSION}_x64-setup.exe`),
-    path.join(releaseDir, `TizuMark_${VERSION}_x64_en-US.msi`),
-    path.join(releaseDir, `TizuMark_${VERSION}_x64.exe`),
+    path.join(releaseDir, `TuziMark_${VERSION}_x64-setup.exe`),
+    path.join(releaseDir, `TuziMark_${VERSION}_x64_en-US.msi`),
+    path.join(releaseDir, `TuziMark_${VERSION}_x64.exe`),
     path.join(releaseDir, 'update-windows-x86_64.json'),
   ];
   for (const f of files) {

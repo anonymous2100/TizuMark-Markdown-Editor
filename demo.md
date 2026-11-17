@@ -1,14 +1,14 @@
-# TizuMark 功能演示
+# TuziMark 功能演示
 
-欢迎使用 TizuMark！这份文档展示了编辑器支持的全部 Markdown 语法。打开**大纲面板**，你可以在左侧看到本文档的完整目录结构。
+欢迎使用 TuziMark！这份文档展示了编辑器支持的全部 Markdown 语法。打开**大纲面板**，你可以在左侧看到本文档的完整目录结构。
 
 ## ✨ 软件特色功能速览
 
-TizuMark 不止是一个 Markdown 编辑器，它在几个关键场景上做到了"开箱即用、无需折腾"：
+TuziMark 不止是一个 Markdown 编辑器，它在几个关键场景上做到了"开箱即用、无需折腾"：
 
 - ⚡ **极速轻量**：基于 Rust + Tauri v2（系统原生 WebView），安装包约 **7MB**、内存占用 **< 50MB**，双击一秒即开。
   
-- 👁️ **实时预览**：左边写、右边渲染，滚动自动同步，无需切换窗口。
+- 👁️ **实时预览（所见即所得）**：像 Typora 一样在排版好的正文上直接写作，光标所在块才显示源码；也支持传统左右/上下分屏对照编辑。
   
 - 🧭 **智能大纲导航**：自动解析标题层级，一键跳转任意章节，长文档永不迷路。
   
@@ -40,7 +40,7 @@ TizuMark 不止是一个 Markdown 编辑器，它在几个关键场景上做到�
 
 ## 基础文本格式
 
-TizuMark 支持所有 GFM（GitHub Flavored Markdown）标准格式，同时扩展了多种实用样式。
+TuziMark 支持所有 GFM（GitHub Flavored Markdown）标准格式，同时扩展了多种实用样式。
 
 - **粗体文本**：用 `**text**` 包裹 — 这是 **重点强调** 的内容
   
@@ -60,7 +60,7 @@ TizuMark 支持所有 GFM（GitHub Flavored Markdown）标准格式，同时扩�
 
 ## 标题层级
 
-TizuMark 的大纲面板会自动解析标题，点击即可快速跳转。当前版本按原样显示（标题锚点由程序自动根据标题文字生成）。
+TuziMark 的大纲面板会自动解析标题，点击即可快速跳转。当前版本按原样显示（标题锚点由程序自动根据标题文字生成）。
 
 ### 三级标题：常用的章节分隔
 
@@ -76,26 +76,26 @@ TizuMark 的大纲面板会自动解析标题，点击即可快速跳转。当�
 
 ### 超链接
 
-- 标准链接：[TizuMark 项目仓库](https://gitee.com/tizu/TizuMark-Markdown-Editor)
+- 标准链接：[TuziMark 项目仓库](https://gitee.com/tizu/TizuMark-Markdown-Editor)
   
-- 参考式链接：[TizuMark][ref-example] — 正文中使用引用标记，文档底部统一定义 URL
+- 参考式链接：[TuziMark][ref-example] — 正文中使用引用标记，文档底部统一定义 URL
   
-- 自动链接：直接写 https://www.tizumark.app 会被自动识别为可点击链接
+- 自动链接：直接写 https://www.tuzimark.app 会被自动识别为可点击链接
   
-- 邮箱链接：contact@tizumark.app 同样自动链接
+- 邮箱链接：contact@tuzimark.app 同样自动链接
   
 [ref-example]: https://gitee.com/tizu/TizuMark-Markdown-Editor
 
 ### 图片
 
-TizuMark 支持网络图片、相对路径、绝对路径三种来源。图片在预览中会转为内联渲染，无需担心加载问题。下面依次展示每种写法的**渲染效果**与**对应语法**：
+TuziMark 支持网络图片、相对路径、绝对路径三种来源。图片在预览中会转为内联渲染，无需担心加载问题。下面依次展示每种写法的**渲染效果**与**对应语法**：
 
 **1. 远程/网络图片**（URL 直链，原样渲染，无需本地文件）
 
-![示例图片](https://picsum.photos/800/400)
+![示例图片](https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800)
 
 ```markdown
-![示例图片](https://picsum.photos/800/400)
+![示例图片](https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800)
 ```
 
 **2. 相对路径图片**（相对于当前 `.md` 文件所在目录，移动文件夹仍有效）
@@ -201,7 +201,7 @@ TizuMark 支持网络图片、相对路径、绝对路径三种来源。图片�
 MarkDown
 : 一种轻量级标记语言，由 John Gruber 和 Aaron Swartz 创建
 
-TizuMark
+TuziMark
 : 基于 Tauri + Rust 构建的跨平台 Markdown 编辑器，专注于极致的写作体验
 
 Tauri
@@ -209,7 +209,7 @@ Tauri
 
 ## 代码块
 
-TizuMark 支持 **100+ 种编程语言**的语法高亮，代码块右上角有一键复制按钮。
+TuziMark 支持 **100+ 种编程语言**的语法高亮，代码块右上角有一键复制按钮。
 
 ### JavaScript
 
@@ -320,7 +320,7 @@ fn main() {
 
 ```shell
 #!/bin/bash
-# 构建并发布 TizuMark
+# 构建并发布 TuziMark
 
 set -e
 
@@ -331,7 +331,7 @@ echo "正在构建..."
 npm run build
 
 echo "构建完成！产物位于 src-tauri/target/release/"
-ls -lh src-tauri/target/release/tizumark*
+ls -lh src-tauri/target/release/tuzimark*
 ```
 
 ### YAML
@@ -379,7 +379,7 @@ jobs:
 
 | 左对齐（默认）  | 居中对齐    | 右对齐   |
 |:-------- |:-------:| -----:|
-| TizuMark | 轻量级     | 最快    |
+| TuziMark | 轻量级     | 最快    |
 | 实时预览     | 流畅输入   | 极速    |
 | 原生性能     | Rust 引擎 | <50MB |
 
@@ -401,7 +401,7 @@ jobs:
 
 ## 引用块
 
-> 单一引用：TizuMark 的设计哲学是"简单就是力量"。我们相信一个好工具应该让你专注于内容，而不是配置工具本身。
+> 单一引用：TuziMark 的设计哲学是"简单就是力量"。我们相信一个好工具应该让你专注于内容，而不是配置工具本身。
 > 
 嵌套引用：
 
@@ -415,11 +415,11 @@ jobs:
 
 ## 数学公式
 
-TizuMark 内置 KaTeX 渲染引擎，支持行内公式和独立公式。这是 TizuMark 区别于普通 Markdown 编辑器的重要特性。
+TuziMark 内置 KaTeX 渲染引擎，支持行内公式和独立公式。这是 TuziMark 区别于普通 Markdown 编辑器的重要特性。
 
 > [!NOTE]
 > 
-> 以下数学公式在 Gitee / GitHub 等网页端可能显示为源码（如 `$$` 和 LaTeX 代码），这是平台不支持 KaTeX 渲染所致。**在 TizuMark 软件中可完美渲染。** 打开 [demo.md](https://gitee.com/tizu/TizuMark-Markdown-Editor/blob/master/demo.md) 查看效果。
+> 以下数学公式在 Gitee / GitHub 等网页端可能显示为源码（如 `$$` 和 LaTeX 代码），这是平台不支持 KaTeX 渲染所致。**在 TuziMark 软件中可完美渲染。** 打开 [demo.md](https://gitee.com/tizu/TizuMark-Markdown-Editor/blob/master/demo.md) 查看效果。
 > 
 ### 行内公式
 
@@ -489,11 +489,11 @@ $$
 
 ## 流程图与图表
 
-TizuMark 内置 Mermaid 图表引擎，用代码即可绘制多种专业图表。特别注意：图表会跟随明暗主题自动切换配色。
+TuziMark 内置 Mermaid 图表引擎，用代码即可绘制多种专业图表。特别注意：图表会跟随明暗主题自动切换配色。
 
 > [!NOTE]
 > 
-> 以下 Mermaid 图表在 Gitee / GitHub 等网页端可能显示为源码，这是平台不支持 Mermaid 渲染所致。**在 TizuMark 软件中可完美渲染。** 打开 [demo.md](https://gitee.com/tizu/TizuMark-Markdown-Editor/blob/master/demo.md) 查看效果。
+> 以下 Mermaid 图表在 Gitee / GitHub 等网页端可能显示为源码，这是平台不支持 Mermaid 渲染所致。**在 TuziMark 软件中可完美渲染。** 打开 [demo.md](https://gitee.com/tizu/TizuMark-Markdown-Editor/blob/master/demo.md) 查看效果。
 > 
 
 **ELK 自动布局**：图表默认使用 dagre 布局，也可在图表 frontmatter 中声明 `layout: elk` 切换为 ELK 引擎，对大型图表的节点排布更友好：
@@ -530,17 +530,17 @@ graph TD
 ```mermaid
 sequenceDiagram
     actor 作者
-    participant TizuMark
+    participant TuziMark
     participant 文件系统
     actor 读者
 
-    作者->>TizuMark: 打开编辑器
-    作者->>TizuMark: 撰写内容
-    TizuMark->>TizuMark: 实时渲染预览
+    作者->>TuziMark: 打开编辑器
+    作者->>TuziMark: 撰写内容
+    TuziMark->>TuziMark: 实时渲染预览
     作者->>文件系统: Ctrl+S 保存
-    TizuMark->>文件系统: 写入 .md 文件
-    作者->>TizuMark: 导出 HTML
-    TizuMark->>文件系统: 生成 .html 文件
+    TuziMark->>文件系统: 写入 .md 文件
+    作者->>TuziMark: 导出 HTML
+    TuziMark->>文件系统: 生成 .html 文件
     读者->>文件系统: 打开 HTML
     Note over 作者,读者: 一次写作，多种分发
 ```
@@ -549,7 +549,7 @@ sequenceDiagram
 
 ```mermaid
 gantt
-    title TizuMark 开发路线图
+    title TuziMark 开发路线图
     dateFormat  YYYY-MM
     axisFormat  %Y-%m
 
@@ -620,22 +620,22 @@ classDiagram
 
 ## 提示框（Callout）
 
-TizuMark 支持 GitHub 风格的提示框，让文档中的注意事项更加醒目。
+TuziMark 支持 GitHub 风格的提示框，让文档中的注意事项更加醒目。
 
 > [!NOTE]
-> 这是一个**普通提示**。TizuMark 当前仅支持 Windows 平台，macOS 和 Linux 版本正在开发中。
+> 这是一个**普通提示**。TuziMark 当前仅支持 Windows 平台，macOS 和 Linux 版本正在开发中。
 
 > [!TIP]
-> **效率技巧**：直接拖拽 `.md` 文件到 TizuMark 窗口即可快速打开，支持多文件同时拖入。你还可以用 `Ctrl+K` 快速插入超链接。
+> **效率技巧**：直接拖拽 `.md` 文件到 TuziMark 窗口即可快速打开，支持多文件同时拖入。你还可以用 `Ctrl+K` 快速插入超链接。
 
 > [!IMPORTANT]
-> **重要提醒**：TizuMark 会在关闭未保存的文件时弹出提醒，防止误操作导致内容丢失。但建议养成经常按 `Ctrl+S` 的好习惯。
+> **重要提醒**：TuziMark 会在关闭未保存的文件时弹出提醒，防止误操作导致内容丢失。但建议养成经常按 `Ctrl+S` 的好习惯。
 
 > [!WARNING]
 > **性能警告**：导出超大文档（超过 10 万行）为长图时，可能会消耗较多内存。建议大文档分段导出，或使用 HTML 导出代替。
 
 > [!CAUTION]
-> **安全注意**：TizuMark 导出的 HTML 文件是自包含的独立网页，可以安全分享给他人。但在分享前，请检查文档中是否包含敏感信息（如密钥、密码等）。
+> **安全注意**：TuziMark 导出的 HTML 文件是自包含的独立网页，可以安全分享给他人。但在分享前，请检查文档中是否包含敏感信息（如密钥、密码等）。
 
 ### 自定义标题
 
@@ -655,7 +655,7 @@ TizuMark 支持 GitHub 风格的提示框，让文档中的注意事项更加醒
 
 ## 导出功能
 
-TizuMark 支持三种导出方式，覆盖不同的使用场景。
+TuziMark 支持三种导出方式，覆盖不同的使用场景。
 
 ### 导出 HTML
 
@@ -686,7 +686,7 @@ TizuMark 支持三种导出方式，覆盖不同的使用场景。
 
 ## 查找与替换
 
-TizuMark 提供三种层级的查找能力：
+TuziMark 提供三种层级的查找能力：
 
 ### 编辑器内查找
 
@@ -728,7 +728,7 @@ TizuMark 提供三种层级的查找能力：
 
 ## Emoji 表情
 
-TizuMark 支持内置 Emoji 短代码。在编辑器中输入短代码，预览中会渲染为表情符号：
+TuziMark 支持内置 Emoji 短代码。在编辑器中输入短代码，预览中会渲染为表情符号：
 
 | 短代码          | 表情         | 含义  |
 | ------------ | ---------- | --- |
@@ -751,7 +751,7 @@ TizuMark 支持内置 Emoji 短代码。在编辑器中输入短代码，预览�
 
 ## 脚注
 
-TizuMark 支持 Markdown 扩展脚注语法[^1]。
+TuziMark 支持 Markdown 扩展脚注语法[^1]。
 
 使用脚注可以让你在文档中添加补充说明而不打断正文的阅读流。脚注通常出现在文档底部，方便读者查阅[^2]。
 
@@ -763,7 +763,7 @@ TizuMark 支持 Markdown 扩展脚注语法[^1]。
 
 ## 文件与工作区
 
-TizuMark 不只是单文件编辑器，它提供了完整的文件管理体验。
+TuziMark 不只是单文件编辑器，它提供了完整的文件管理体验。
 
 ### 多标签页
 
@@ -797,8 +797,8 @@ TizuMark 不只是单文件编辑器，它提供了完整的文件管理体验�
 
 ### 系统集成
 
-- **文件关联**：双击 `.md` / `.markdown` 文件直接用 TizuMark 打开
-- **命令行打开**：`tizumark.exe document.md` 可直接打开指定文件
+- **文件关联**：双击 `.md` / `.markdown` 文件直接用 TuziMark 打开
+- **命令行打开**：`tuzimark.exe document.md` 可直接打开指定文件
 - **系统托盘**：可显示托盘图标，关闭窗口行为可选「每次询问」「退出应用」「最小化到托盘」；可为「关闭到托盘」设置 OS 级全局快捷键，窗口隐藏后一键唤回
 - **会话恢复**：重启后自动恢复上次的标签页、文件夹工作区与展开目录
 
@@ -806,7 +806,7 @@ TizuMark 不只是单文件编辑器，它提供了完整的文件管理体验�
 
 ## 个性化与设置
 
-TizuMark 提供丰富的自定义选项，`文件 → 设置` 可随时调整。
+TuziMark 提供丰富的自定义选项，`文件 → 设置` 可随时调整。
 
 ### 主题与配色
 
@@ -853,7 +853,7 @@ TizuMark 提供丰富的自定义选项，`文件 → 设置` 可随时调整。
 
 ## 更多图表类型
 
-TizuMark 支持 Mermaid 所有常用图表。以下展示更多图表类型：
+TuziMark 支持 Mermaid 所有常用图表。以下展示更多图表类型：
 
 ### ER 图
 
@@ -884,7 +884,7 @@ erDiagram
 ### 饼图
 
 ```mermaid
-pie title TizuMark 技术栈构成
+pie title TuziMark 技术栈构成
     "Rust 后端" : 35
     "JavaScript 前端" : 30
     "CSS 样式" : 15
@@ -916,7 +916,7 @@ gitGraph
 
 ```mermaid
 journey
-    title 用户使用 TizuMark 的一天
+    title 用户使用 TuziMark 的一天
     section 上午
       启动软件: 5: 用户
       打开文档: 5: 用户
@@ -939,7 +939,7 @@ journey
 
 ### 缩写词
 
-TizuMark 支持缩写词标注（鼠标悬停查看释义）：
+TuziMark 支持缩写词标注（鼠标悬停查看释义）：
 
 *[HTML]: HyperText Markup Language — 超文本标记语言
 
@@ -949,7 +949,7 @@ TizuMark 支持缩写词标注（鼠标悬停查看释义）：
 
 *[TOC]: Table of Contents — 文档目录
 
-HTML、CSS 和 GFM 都是 Web 技术的基础。TizuMark 使用 GFM 作为默认 Markdown 方言。
+HTML、CSS 和 GFM 都是 Web 技术的基础。TuziMark 使用 GFM 作为默认 Markdown 方言。
 
 ### 转义字符
 
@@ -965,7 +965,7 @@ HTML、CSS 和 GFM 都是 Web 技术的基础。TizuMark 使用 GFM 作为默认
 
 ### HTML 实体
 
-TizuMark 支持 HTML 实体字符：
+TuziMark 支持 HTML 实体字符：
 
 - 版权符号：`&copy;` → &copy;
   
@@ -981,7 +981,7 @@ TizuMark 支持 HTML 实体字符：
 
 ## 更多 HTML 与原生扩展
 
-TizuMark 在兼容标准 Markdown 的同时，也支持一批常用的原生 HTML 标签，方便你做更精细的排版（这些标签会经过安全过滤，仅放行无害属性）。
+TuziMark 在兼容标准 Markdown 的同时，也支持一批常用的原生 HTML 标签，方便你做更精细的排版（这些标签会经过安全过滤，仅放行无害属性）。
 
 ### 折叠区块（details / summary）
 
@@ -1026,7 +1026,7 @@ TizuMark 在兼容标准 Markdown 的同时，也支持一批常用的原生 HTM
 
 <figure>
   <img src="assets/icon.png" alt="应用图标">
-  <figcaption>TizuMark 应用图标（随包内置，离线可见）</figcaption>
+  <figcaption>TuziMark 应用图标（随包内置，离线可见）</figcaption>
 </figure>
 
 ### 行内数学（反引号包裹）
@@ -1066,7 +1066,7 @@ const content = '# Hello\n\nWorld!';
 >   
 ### 引用中的代码
 
-> 在 TizuMark 中构建项目：
+> 在 TuziMark 中构建项目：
 > 
 > ```shell
 > npm run build
@@ -1080,7 +1080,7 @@ const content = '# Hello\n\nWorld!';
 | --- | ------------------- | -------------------------------------------- |
 | 加粗  | `**重要**`            | **重要**                                       |
 | 代码  | `` `const x = 1` `` | `const x = 1`                                |
-| 链接  | `[链接](url)`         | [TizuMark](https://gitee.com/tizu/TizuMark-Markdown-Editor) |
+| 链接  | `[链接](url)`         | [TuziMark](https://gitee.com/tizu/TizuMark-Markdown-Editor) |
 | 图片  | `![icon](url)`      | 表格中不推荐放图片                                    |
 
 ---
@@ -1091,7 +1091,7 @@ const content = '# Hello\n\nWorld!';
 
 ### 为什么选择 Rust 构建桌面应用？
 
-在开发 TizuMark 时，我们选择了 ==Rust + Tauri== 作为底层架构。这个决定带来了几个关键优势：
+在开发 TuziMark 时，我们选择了 ==Rust + Tauri== 作为底层架构。这个决定带来了几个关键优势：
 
 | 维度    | 传统方案        | Rust + Tauri |
 | ----- | ----------- | ------------ |
@@ -1121,13 +1121,13 @@ $$
 
 > [!TIP]
 > 
-> **写作建议**：好的技术文档是"分层"的——正文讲核心逻辑，脚注补充细节[^1]，引用块标注出处，提示框强调要点。TizuMark 让你轻松写出层次分明的专业文档。
+> **写作建议**：好的技术文档是"分层"的——正文讲核心逻辑，脚注补充细节[^1]，引用块标注出处，提示框强调要点。TuziMark 让你轻松写出层次分明的专业文档。
 > 
 ---
 
 <p align="center">
 
-  <b>✨ 这就是 TizuMark 的全部语法能力 ✨</b><br><br>
+  <b>✨ 这就是 TuziMark 的全部语法能力 ✨</b><br><br>
 
   如果觉得好用，欢迎给项目点一个 ⭐ Star！<br>
 

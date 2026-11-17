@@ -1,12 +1,12 @@
-# TizuMark
+# TuziMark
 
-**TizuMark** is a lightweight, open-source **Markdown editor** for Windows with WYSIWYG live preview, outline navigation, KaTeX & Mermaid support — a free **Typora alternative** built with Tauri + Rust.
+**TuziMark** is a lightweight, open-source **Markdown editor** for Windows with WYSIWYG live preview, outline navigation, KaTeX & Mermaid support — a free **Typora alternative** built with Tauri + Rust.
 
 🌐 [简体中文](README.md) | **English** | [Español](README.es.md)
 
 <div align="center">
 
-![TizuMark](icon.png)
+![TuziMark](icon.png)
 
 </div>
 
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.2.6-blue" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.2.5-blue" alt="Version">
   <img src="https://img.shields.io/badge/Windows-7%2B-brightgreen" alt="Windows">
   <img src="https://img.shields.io/badge/macOS-Planned-lightgrey" alt="macOS">
   <img src="https://img.shields.io/badge/Linux-Planned-lightgrey" alt="Linux">
@@ -29,21 +29,21 @@
 <p align="center" style="font-size:1.15em"><b>~7MB installer · &lt;50MB RAM · Double-click to launch</b></p>
 
 <p align="center">
-  <img src="demo.gif" alt="TizuMark Feature Demo" width="880">
+  <img src="demo.gif" alt="TuziMark Feature Demo" width="880">
 </p>
 
 ---
 
-## Why TizuMark?
+## Why TuziMark?
 
 <p align="center"><b>Open. Read. Edit. Export. That's it.</b></p>
 
-The world isn't short of Markdown editors. But most fall into one of two camps: heavyweight monsters that hog hundreds of MB, or toys too barebones for real work. TizuMark lands right in the sweet spot.
+The world isn't short of Markdown editors. But most fall into one of two camps: heavyweight monsters that hog hundreds of MB, or toys too barebones for real work. TuziMark lands right in the sweet spot.
 
-| Pain Point | The Usual Way | ✨ TizuMark |
+| Pain Point | The Usual Way | ✨ TuziMark |
 |---|---|---|
 | 🐢 **Too heavy** | Hundreds of MB RAM, multi-GB install, slow boot | **Rust engine. ~7MB installer, <50MB RAM, up in a second** |
-| 👯 **Split views** | Source on one side, render on the other — scroll and squint | **Live preview, WYSIWYG, editor/preview scroll auto-synced** |
+| 👯 **Split views** | Source on one side, render on the other — scroll and squint | **Reading, source, and live-preview modes; horizontal/vertical split + scroll sync, plus Typora-style WYSIWYG** |
 | 🌀 **Long docs** | Endless scrolling, can't find that one section | **Auto-generated outline from headings, one click to any chapter** |
 | 🧩 **Math & diagrams** | Install LaTeX, switch tools, export, paste, repeat | **Built-in KaTeX & Mermaid — math and diagrams render from code** |
 
@@ -51,16 +51,17 @@ The world isn't short of Markdown editors. But most fall into one of two camps: 
 
 ## Key Features
 
-> TizuMark lands right in the sweet spot between heavyweight IDEs and barebones notepads — nailing the things writers care about most.
+> TuziMark lands right in the sweet spot between heavyweight IDEs and barebones notepads — nailing the things writers care about most.
 
 - ⚡ **Blazing fast & lightweight**: Built on **Rust + Tauri v2** (native WebView), ~**7MB** installer, **<50MB** RAM, launches in under a second — 4/5 less memory than Electron apps.
-- 👁️ **Live WYSIWYG preview**: Write on the left, see it render on the right. Editor and preview scroll auto-synced — no window switching.
+- 👁️ **Live WYSIWYG preview**: Write directly on the rendered text, Typora-style — content stays formatted, and only the block under your cursor shows its source. Edit table cells in place, tick task checkboxes, and see syntax highlighting in code blocks — the editing state matches the rendered state pixel for pixel.
+- 🪟 **Horizontal / vertical split**: In source mode, flip the split direction with one click (double-click the divider or hit the button). Free-drag the split ratio and it's remembered; collapse either pane into an edge-docked semicircle handle to focus on source or output alone.
 - 🧠 **Smart view per file type**: Markdown auto splits preview/edit; plain text & code open in a pure editor (no preview pane); images open read-only — each file gets the right view.
 - 🧭 **Smart outline navigation**: Auto-parses heading hierarchy, one click to any chapter. Never get lost in long docs.
 - 📐 **Built-in KaTeX math**: Inline formulas, display blocks, matrices, equation systems; supports `$…$` / `$$…$$` as well as LaTeX-style `\(…\)` / `\[…\]` delimiters — papers, notes, formulas all handled.
 - 📊 **Built-in Mermaid diagrams**: Flowcharts, sequence diagrams, Gantt charts, class diagrams, state diagrams… **draw with code, auto-adapts to light/dark theme**, with ELK auto-layout support.
 - 🖼️ **Paste-to-insert images**: Screenshots or drag-drop, auto-dedup via MD5. Store in `assets/` or inline as Base64. Relative paths resolve identically in preview and export.
-- 📤 **Multi-format export**: Standalone HTML (full styling, fully offline), high-res PNG long screenshot, PDF (system print dialog), and **Word DOCX** (math & diagrams rasterized, images auto-scaled to fit the page) — all preserve dark/light theme.
+- 📤 **Multi-format export**: Standalone HTML (full styling, fully offline), high-res PNG long screenshot, PDF (one-click export with a print-dialog fallback on very old runtimes), and **Word DOCX** (math & diagrams rasterized, images auto-scaled to fit the page) — all preserve dark/light theme.
 - ⌨️ **Fully customizable shortcuts**: Every single shortcut can be rebound in `File → Keyboard Shortcuts` to match your muscle memory.
 - 📂 **Multi-tab + workspace**: Edit multiple files at once, drag-drop batch open, folder workspace with sidebar file tree, `.md` file association.
 - 🚀 **Huge-doc smooth preview**: Sliding-window + virtual rendering for documents with tens of thousands of lines — never lags. External file changes auto-detected with reload prompt.
@@ -76,7 +77,7 @@ The world isn't short of Markdown editors. But most fall into one of two camps: 
 |---|---|---|
 | Full GFM syntax highlighting | Live scroll-synced preview | Standalone HTML (with full styling) |
 | 100+ language code highlighting | KaTeX math rendering | High-res long screenshot PNG |
-| Find & replace with regex | Mermaid flowcharts, sequences, Gantt, state | Export PDF (system print dialog) |
+| Find & replace with regex | Mermaid flowcharts, sequences, Gantt, state | Export PDF (one-click / print fallback) |
 | Cross-file search (`Ctrl+H`) | Emoji shortcodes (`:rocket:` → 🚀) | Dark / light theme preserved |
 | Collapsible format toolbar | Image viewer (drag-pan + scroll-zoom) | 100% offline |
 | Auto bracket & quote pairing | Adaptive image sizing | CJK Emoji support |
@@ -88,9 +89,9 @@ The world isn't short of Markdown editors. But most fall into one of two camps: 
 | Outline sidebar — jump anywhere | Light / Dark / Follow System | CLI file opening |
 | Folder workspace (sidebar file tree) | Font size, line height, max width | File association: .md, .markdown |
 | Cross-file search (Ctrl+H) / file search (Ctrl+P by name or path) | Tab width, word wrap toggle | Recently opened files list |
-| Tab drag-to-reorder | Code block line numbers / auto-wrap | Unsaved-state markers + close prompt |
+| Tab drag-to-reorder, right-click rename | Code block line numbers / auto-wrap | Unsaved-state markers + close prompt |
 | Drag & drop, batch file open | Fully rebindable shortcuts | System tray (hideable) + close behavior |
-| Free-drag split pane ratio | Import custom fonts (editor & preview separately) | Status bar word & char count |
+| Horizontal/vertical split toggle, free-drag remembered ratio | Import custom fonts (editor & preview separately) | Status bar word & char count |
 | Find in preview (regex) + copy as HTML | 5 color schemes + font picker (all system fonts, searchable / import local) | External-change detection & reload prompt |
 | Soft line break toggle | Chinese / English UI toggle | |
 | Session restore (tabs & workspace) | Frameless custom window controls | |
@@ -146,7 +147,7 @@ The world isn't short of Markdown editors. But most fall into one of two camps: 
 
 > On first launch, the user guide opens automatically. You can also find it in `Help → User Guide` anytime.
 
-> 🔔 **On first install or after a version upgrade, TizuMark automatically opens the User Guide and the full syntax demo (demo.md) to help you get started with new features.**
+> 🔔 **On first install or after a version upgrade, TuziMark automatically opens the User Guide and the full syntax demo (demo.md) to help you get started with new features.**
 
 📖 Want to see every syntax in action? Open [demo.md](demo.md) for a full syntax showcase.
 
@@ -204,7 +205,7 @@ npm run build    # production build
 ## FAQ
 
 <details open>
-<summary><b>Is TizuMark really free?</b></summary>
+<summary><b>Is TuziMark really free?</b></summary>
 
 Yes. Free forever, open source, no feature paywalls.
 </details>
@@ -235,9 +236,9 @@ Markdown (`.md`, `.markdown`, `.mdown`, `.mkd`, … — 7 extensions, auto split
 
 <p align="center"><b>One person. No salary. Your support keeps this alive.</b></p>
 
-I built TizuMark because I was tired of Markdown tools that were either bloated or broken. So I made my own.
+I built TuziMark because I was tired of Markdown tools that were either bloated or broken. So I made my own.
 
-If TizuMark has made your life even a little easier — docs look cleaner, writing flows better, that export earned you a compliment — please consider chipping in. **Your encouragement genuinely makes my day and extends this project's runway.**
+If TuziMark has made your life even a little easier — docs look cleaner, writing flows better, that export earned you a compliment — please consider chipping in. **Your encouragement genuinely makes my day and extends this project's runway.**
 
 Can't donate? No worries. A GitHub star, a shout-out to a friend, a "nice tool" in the group chat — that's already huge.
 
@@ -283,7 +284,7 @@ Questions, feedback, collaboration — open an issue or join the QQ group.
 
 ## License
 
-Copyright (c) 2024-2026 TizuMark
+Copyright (c) 2024-2026 TuziMark
 
 This software is released under the [GNU General Public License v3.0](LICENSE). You are free to use, modify, and distribute it, but derivative works must remain under GPL v3.
 
@@ -292,7 +293,7 @@ Bundled open-source components are licensed under their respective terms. See `H
 ---
 
 <p align="center">
-  <b>✨ TizuMark — Stupidly light. Exactly fast enough.</b><br><br>
+  <b>✨ TuziMark — Stupidly light. Exactly fast enough.</b><br><br>
   <a href="https://github.com/tizuio/TizuMark-Markdown-Editor/releases"><img src="https://img.shields.io/badge/⬇_GitHub_Download-black?style=for-the-badge&logo=github" alt="GitHub Download"></a>
   &nbsp;
   <a href="https://gitee.com/tizu/TizuMark-Markdown-Editor/releases"><img src="https://img.shields.io/badge/⬇_Gitee_Download-C71D23?style=for-the-badge&logo=gitee" alt="Gitee Download"></a>

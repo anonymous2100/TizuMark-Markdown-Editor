@@ -358,7 +358,7 @@ function main(argv) {
     return finish(errors, warns, oks, infos, releaseMode);
   }
   const VERSION = pkg.version;
-  const sigFile = path.join(ROOT, 'release', `TizuMark_${VERSION}_x64-setup.exe.sig`);
+  const sigFile = path.join(ROOT, 'release', `TuziMark_${VERSION}_x64-setup.exe.sig`);
   const hasSig = fileExists(sigFile);
 
   if (!hasSig) {
@@ -380,16 +380,16 @@ function main(argv) {
           if (/file:/.test(sig.trustedText) && /timestamp:/.test(sig.trustedText)) {
             const m = sig.trustedText.match(/file:(\S+)/);
             const fname = m ? m[1] : '';
-            if (fname === `TizuMark_${VERSION}_x64-setup.exe`) {
+            if (fname === `TuziMark_${VERSION}_x64-setup.exe`) {
               ok('NSIS .sig trusted comment 引用了正确安装包名与时间戳');
             } else {
-              warn(`NSIS .sig trusted comment 引用文件名 "${fname}" 与期望 "TizuMark_${VERSION}_x64-setup.exe" 不符`);
+              warn(`NSIS .sig trusted comment 引用文件名 "${fname}" 与期望 "TuziMark_${VERSION}_x64-setup.exe" 不符`);
             }
           } else {
             warn('NSIS .sig trusted comment 缺少 file:/timestamp: 字段（结构可疑）');
           }
           // 注：最终密码学校验由 Tauri 运行时完成；此处已确认密钥一致性与结构正确。
-          const exe = path.join(ROOT, 'release', `TizuMark_${VERSION}_x64-setup.exe`);
+          const exe = path.join(ROOT, 'release', `TuziMark_${VERSION}_x64-setup.exe`);
           if (!fileExists(exe)) {
             warn(`未找到 ${path.basename(exe)}，无法确认签名覆盖范围（结构已校验）`);
           }

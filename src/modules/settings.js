@@ -12,6 +12,7 @@
           tabSize: 4,
           lineWrap: true,
           lineNumbers: true,
+          codeFolding: true, // 源码模式按标题/围栏/长段落显示折叠箭头（可在设置里关闭）
           previewFontSize: 16,
           lineHeight: 1.7,
           maxWidth: 0,
@@ -37,12 +38,10 @@
          clearTabsOnQuit: false, // 退出应用时不保存标签会话，下次打开总是空白
           showAllFiles: false, // 文件树过滤：默认只列受支持格式（markdown/image/text），true 时显示目录内全部文件
           toolbarCollapsed: false,
-          // 右侧大纲栏：sidebarHidden=true 表示收起。默认展开。
+          // 侧栏整体收起状态：sidebarHidden=true 表示收起。默认展开。
           sidebarHidden: false,
-          // 左侧文件夹栏：folderHidden=true 表示收起。默认折叠（用户要求），首次启动不占宽度。
-          folderHidden: true,
-          // 左侧文件夹栏宽度（与大纲栏各自独立记忆）
-          folderWidth: 240,
+          // 侧栏上次选中的标签页：'outline' | 'files'。只有用户点击标签才更新，重启后按此还原。
+          sidebarTab: 'outline',
           // 大纲层级过滤：0=全部，1~6=仅显示到该层级
           outlineFilterLevel: 0,
           customFonts: [],
@@ -50,8 +49,15 @@
           previewFont: '',
           fileSortKey: 'name',
           fileSortOrder: 'asc',
-          // 预览区分屏宽度（合并自 PR #36）：拖拽 resizer 后持久化，下次启动按此还原。
+          // 预览区分屏宽度（合并自 PR #36，已废弃为迁移源）：新逻辑用比例 editorSplitRatioH，
+          // 旧 settings 里的 px 值在首次 applyPreviewPaneWidth 时惰性换算成比例。
           previewPaneWidth: 360,
+          // 左右分屏编辑器宽度占比（比例制）：窗口缩放/重启后按比例还原，不随窗口大小漂移
+          editorSplitRatioH: 0.65,
+          // 分屏方向：'horizontal' = 左右分屏，'vertical' = 上下分屏。
+          splitOrientation: 'horizontal',
+          // 上下分屏时编辑器所占高度比例（0~1），拖拽后持久化，跨视图切换/重启保留。
+          editorSplitRatioV: 0.5,
           codeFont: '', // 预览代码块（行内代码 + 围栏代码块）字体，存自定义字体 id，空=跟随等宽默认
           // 框架界面字号（侧栏/工具栏/弹窗/菜单/标签/状态栏等 chrome），范围 11–18px，默认 13px
           uiFontSize: 13,
@@ -126,6 +132,7 @@
         if (this._selects && this._selects.tabSize) this._selects.tabSize.setValue(String(s.tabSize), true);
         document.getElementById('set-line-wrap').checked = s.lineWrap;
         document.getElementById('set-line-numbers').checked = s.lineNumbers;
+        document.getElementById('set-code-folding').checked = s.codeFolding !== false;
         document.getElementById('set-preview-font-size').value = s.previewFontSize;
         document.getElementById('preview-font-size-label').textContent = s.previewFontSize + 'px';
         if (this._selects && this._selects.lineHeight) this._selects.lineHeight.setValue(String(s.lineHeight), true);
@@ -260,6 +267,9 @@
         });
         document.getElementById('set-line-numbers').addEventListener('change', (e) => {
           this.settings.lineNumbers = e.target.checked;
+        });
+        document.getElementById('set-code-folding').addEventListener('change', (e) => {
+          this.settings.codeFolding = e.target.checked;
         });
         document.getElementById('set-preview-font-size').addEventListener('input', (e) => {
           document.getElementById('preview-font-size-label').textContent = Number(e.target.value) + 'px';
@@ -524,6 +534,8 @@
         // 行号 + 最大宽度由所见即所得外壳统一同步（所见即所得下强制去行号，离开按设置恢复）
         if (this.applyWysiwygEditorChrome) this.applyWysiwygEditorChrome();
         else this.cm.setOption('lineNumbers', s.lineNumbers);
+        // 折叠开关变更后即时挂/卸折叠槽（含启动时的初始化）
+        if (this._syncCodeFolding) this._syncCodeFolding();
         this.preview.style.fontSize = s.previewFontSize + 'px';
         this.previewZoom = null; // 应用设置时回落到设置字号（与编辑器 tab.fontSize 重置一致）
         this.preview.style.lineHeight = String(s.lineHeight);

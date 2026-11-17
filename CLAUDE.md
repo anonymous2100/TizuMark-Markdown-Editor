@@ -91,18 +91,18 @@ release body 用以下**中文**格式作为前半部分，其后紧跟**英文�
 ```
 ## ⬇️ 下载
 
-> **🏆 推荐大多数用户选择：** [⬇ TizuMark_{version}_x64-setup.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TizuMark_{version}_x64-setup.exe)
+> **🏆 推荐大多数用户选择：** [⬇ TuziMark_{version}_x64-setup.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TuziMark_{version}_x64-setup.exe)
 >
-> **🛠 企业/批量部署：** [⬇ TizuMark_{version}_x64_en-US.msi](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TizuMark_{version}_x64_en-US.msi)
+> **🛠 企业/批量部署：** [⬇ TuziMark_{version}_x64_en-US.msi](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TuziMark_{version}_x64_en-US.msi)
 >
-> **📦 绿色版（免安装）：** [⬇ TizuMark_{version}_x64.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TizuMark_{version}_x64.exe)
+> **📦 绿色版（免安装）：** [⬇ TuziMark_{version}_x64.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TuziMark_{version}_x64.exe)
 
 ### 三种安装包说明
 
 | 安装包 | 适用人群 | 特点 |
 |--------|---------|------|
 | ⭐ **NSIS 安装包 (.exe)** — **推荐** | 绝大多数 Windows 用户 | 传统的 setup 向导安装，支持自定义安装路径、创建桌面快捷方式、自动注册文件关联。双击即装，即装即用。 |
-| **MSI 安装包 (.msi)** | 企业 IT 管理员、需要批量部署的用户 | 标准的 Windows Installer 格式，支持组策略推送、静默安装（msiexec /i TizuMark_{version}_x64_en-US.msi /qn）、适合企业环境集中管理。 |
+| **MSI 安装包 (.msi)** | 企业 IT 管理员、需要批量部署的用户 | 标准的 Windows Installer 格式，支持组策略推送、静默安装（msiexec /i TuziMark_{version}_x64_en-US.msi /qn）、适合企业环境集中管理。 |
 | **绿色版 (.exe)** | 追求便携的用户 | 单文件免安装，解压即用，适合 U 盘携带、临时使用，不写注册表。 |
 
 ---
@@ -137,9 +137,9 @@ release body 用以下**中文**格式作为前半部分，其后紧跟**英文�
 | `update-windows-x86_64.json` | `"version"` + 下载 URL 中的 `v{version}`                           | 在步骤 5 一并更新                              |
 | `README.md`                  | 第 18 行 Version badge `Version-{version}-blue`                  | 文档展示                                    |
 | `README.en.md`               | 第 18 行 Version badge `Version-{version}-blue`                  | 英文文档展示                                  |
-| `src/app.js`                 | 中文 i18n `versionInfo: 'TizuMark v{version}'`（约 L207）           | 关于对话框文本                                 |
-| `src/app.js`                 | 英文 i18n `versionInfo: 'TizuMark v{version}'`（约 L513）           | 关于对话框文本（英文）                             |
-| `src/index.html`             | `#about-version` 硬编码 `TizuMark v{version}`（约 L375）             | 关于对话框兜底（运行时会由 `getVersion()` 覆盖，但应保持同步） |
+| `src/app.js`                 | 中文 i18n `versionInfo: 'TuziMark v{version}'`（约 L207）           | 关于对话框文本                                 |
+| `src/app.js`                 | 英文 i18n `versionInfo: 'TuziMark v{version}'`（约 L513）           | 关于对话框文本（英文）                             |
+| `src/index.html`             | `#about-version` 硬编码 `TuziMark v{version}`（约 L375）             | 关于对话框兜底（运行时会由 `getVersion()` 覆盖，但应保持同步） |
 | `src/tauri-mock.js`          | `getVersion: async function() { return '{version}'; }`（约 L278） | 仅浏览器联调/测试用 mock，不进发布包，建议同步              |
 
 > **禁止手改**：`src-tauri/Cargo.lock` 与 `package-lock.json` 由构建工具自动更新，与产品版本号无关，切勿手动编辑。
@@ -156,18 +156,18 @@ npm run build
 
 构建产物（三种安装包）：
 
-- `src-tauri/target/release/bundle/nsis/TizuMark_{version}_x64-setup.exe`
+- `src-tauri/target/release/bundle/nsis/TuziMark_{version}_x64-setup.exe`
   
-- `src-tauri/target/release/bundle/msi/TizuMark_{version}_x64_en-US.msi`
+- `src-tauri/target/release/bundle/msi/TuziMark_{version}_x64_en-US.msi`
   
-- `src-tauri/target/release/TizuMark_{version}_x64.exe`（绿色版，postbuild 自动生成）
+- `src-tauri/target/release/TuziMark_{version}_x64.exe`（绿色版，postbuild 自动生成）
   
 #### 3. 复制到本地归档
 
 ```bash
-Copy-Item -Path "src-tauri/target/release/bundle/nsis/TizuMark_{version}_x64-setup.exe" -Destination "release/" -Force
-Copy-Item -Path "src-tauri/target/release/bundle/msi/TizuMark_{version}_x64_en-US.msi" -Destination "release/" -Force
-Copy-Item -Path "src-tauri/target/release/TizuMark_{version}_x64.exe" -Destination "release/" -Force
+Copy-Item -Path "src-tauri/target/release/bundle/nsis/TuziMark_{version}_x64-setup.exe" -Destination "release/" -Force
+Copy-Item -Path "src-tauri/target/release/bundle/msi/TuziMark_{version}_x64_en-US.msi" -Destination "release/" -Force
+Copy-Item -Path "src-tauri/target/release/TuziMark_{version}_x64.exe" -Destination "release/" -Force
 ```
 
 #### 4. 签名安装包
@@ -179,9 +179,9 @@ Copy-Item -Path "src-tauri/target/release/TizuMark_{version}_x64.exe" -Destinati
 密码：`tizu2024`
 
 ```bash
-$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tizu2024"; npx tauri signer sign -f C:\Users\admin\.tauri\tizu-updater.key "src-tauri/target/release/bundle/nsis/TizuMark_{version}_x64-setup.exe"
-$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tizu2024"; npx tauri signer sign -f C:\Users\admin\.tauri\tizu-updater.key "src-tauri/target/release/bundle/msi/TizuMark_{version}_x64_en-US.msi"
-$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tizu2024"; npx tauri signer sign -f C:\Users\admin\.tauri\tizu-updater.key "src-tauri/target/release/TizuMark_{version}_x64.exe"
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tizu2024"; npx tauri signer sign -f C:\Users\admin\.tauri\tizu-updater.key "src-tauri/target/release/bundle/nsis/TuziMark_{version}_x64-setup.exe"
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tizu2024"; npx tauri signer sign -f C:\Users\admin\.tauri\tizu-updater.key "src-tauri/target/release/bundle/msi/TuziMark_{version}_x64_en-US.msi"
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tizu2024"; npx tauri signer sign -f C:\Users\admin\.tauri\tizu-updater.key "src-tauri/target/release/TuziMark_{version}_x64.exe"
 ```
 
 记下输出中的 NSIS `signature`（MSI 和绿色版签名用于记录，但 `update-windows-x86_64.json` 只需要 NSIS 签名）。
@@ -198,7 +198,7 @@ $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tizu2024"; npx tauri signer sign -f C:\
   
 - `platforms.windows-x86_64.signature` → 上一步的 NSIS 签名
   
-- `platforms.windows-x86_64.url` → `https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TizuMark_{version}_x64-setup.exe`
+- `platforms.windows-x86_64.url` → `https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TuziMark_{version}_x64-setup.exe`
   
 同时复制到归档：
 
@@ -229,7 +229,7 @@ const releaseBody = {
   tag_name: 'v{version}',
   name: 'v{version}',
   target_commitish: 'master',
-  body: `## ⬇️ 下载\n\n> **🏆 推荐大多数用户选择：** [⬇ TizuMark_{version}_x64-setup.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TizuMark_{version}_x64-setup.exe)\n>\n> **🛠 企业/批量部署：** [⬇ TizuMark_{version}_x64_en-US.msi](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TizuMark_{version}_x64_en-US.msi)\n>\n> **📦 绿色版（免安装）：** [⬇ TizuMark_{version}_x64.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TizuMark_{version}_x64.exe)\n\n### 三种安装包说明\n\n| 安装包 | 适用人群 | 特点 |\n|--------|---------|------|\n| ⭐ **NSIS 安装包 (.exe)** — **推荐** | 绝大多数 Windows 用户 | 传统的 setup 向导安装，支持自定义安装路径、创建桌面快捷方式、自动注册文件关联。双击即装，即装即用。 |\n| **MSI 安装包 (.msi)** | 企业 IT 管理员、需要批量部署的用户 | 标准的 Windows Installer 格式，支持组策略推送、静默安装（msiexec /i TizuMark_{version}_x64_en-US.msi /qn）、适合企业环境集中管理。 |\n| **绿色版 (.exe)** | 追求便携的用户 | 单文件免安装，解压即用，适合 U 盘携带、临时使用，不写注册表。 |\n\n---\n\n## ✨ v{version} 更新内容\n\n### 新增\n- ...\n\n### 改进\n- ...\n\n### 修复\n- ...\n\n> 使用中遇到问题欢迎加 QQ 群：1035294939`,
+  body: `## ⬇️ 下载\n\n> **🏆 推荐大多数用户选择：** [⬇ TuziMark_{version}_x64-setup.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TuziMark_{version}_x64-setup.exe)\n>\n> **🛠 企业/批量部署：** [⬇ TuziMark_{version}_x64_en-US.msi](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TuziMark_{version}_x64_en-US.msi)\n>\n> **📦 绿色版（免安装）：** [⬇ TuziMark_{version}_x64.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v{version}/TuziMark_{version}_x64.exe)\n\n### 三种安装包说明\n\n| 安装包 | 适用人群 | 特点 |\n|--------|---------|------|\n| ⭐ **NSIS 安装包 (.exe)** — **推荐** | 绝大多数 Windows 用户 | 传统的 setup 向导安装，支持自定义安装路径、创建桌面快捷方式、自动注册文件关联。双击即装，即装即用。 |\n| **MSI 安装包 (.msi)** | 企业 IT 管理员、需要批量部署的用户 | 标准的 Windows Installer 格式，支持组策略推送、静默安装（msiexec /i TuziMark_{version}_x64_en-US.msi /qn）、适合企业环境集中管理。 |\n| **绿色版 (.exe)** | 追求便携的用户 | 单文件免安装，解压即用，适合 U 盘携带、临时使用，不写注册表。 |\n\n---\n\n## ✨ v{version} 更新内容\n\n### 新增\n- ...\n\n### 改进\n- ...\n\n### 修复\n- ...\n\n> 使用中遇到问题欢迎加 QQ 群：1035294939`,
   prerelease: false,
 };
 
@@ -290,9 +290,9 @@ function uploadFile(releaseId, filePath) {
   const release = await apiRequest('POST', '', releaseBody);
   console.log('Created release #' + release.id);
   const files = [
-    'D:\\\\project\\\\tizu-mark\\\\release\\\\TizuMark_{version}_x64-setup.exe',
-    'D:\\\\project\\\\tizu-mark\\\\release\\\\TizuMark_{version}_x64_en-US.msi',
-    'D:\\\\project\\\\tizu-mark\\\\release\\\\TizuMark_{version}_x64.exe',
+    'D:\\\\project\\\\tizu-mark\\\\release\\\\TuziMark_{version}_x64-setup.exe',
+    'D:\\\\project\\\\tizu-mark\\\\release\\\\TuziMark_{version}_x64_en-US.msi',
+    'D:\\\\project\\\\tizu-mark\\\\release\\\\TuziMark_{version}_x64.exe',
     'D:\\\\project\\\\tizu-mark\\\\release\\\\update-windows-x86_64.json',
   ];
   for (const f of files) {

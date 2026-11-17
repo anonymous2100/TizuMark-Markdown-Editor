@@ -93,14 +93,14 @@ test('相对路径（非 isBundled）本地失败：绝不回退 read_bundled_im
 test('相对路径（isBundled）本地失败：回退 read_bundled_image_as_base64，filename 用原始相对路径', async () => {
   const preview = makePreview('<img src="assets/icon.png" alt="i">');
   const { calls, deps } = makeDeps({
-    activeTab: { filePath: 'C:/Program Files/TizuMark/demo.md', isBundled: true },
+    activeTab: { filePath: 'C:/Program Files/TuziMark/demo.md', isBundled: true },
     fetchThrow: true,
   });
   await processImages(preview, deps);
   const fetchCalls = calls.filter((c) => c.cmd === 'fetch');
   const bundledCalls = calls.filter((c) => c.cmd === 'bundled');
   assert.equal(fetchCalls.length, 1, '应先尝试本地 fetch');
-  assert.equal(fetchCalls[0].args.url, 'C:/Program Files/TizuMark/assets/icon.png');
+  assert.equal(fetchCalls[0].args.url, 'C:/Program Files/TuziMark/assets/icon.png');
   assert.equal(bundledCalls.length, 1, '本地失败后应回退');
   assert.equal(bundledCalls[0].args.filename, 'assets/icon.png', 'filename 用原始相对路径，由 Rust dev/prod 定位');
   assert.match(preview.querySelector('img').getAttribute('src'), /BLOB:data:image\/png;base64/);

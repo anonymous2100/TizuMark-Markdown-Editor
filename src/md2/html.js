@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Yoong Hor Meng
 //
-// TizuMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
+// TuziMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
 // Copyright (c) 2026 The md2 authors，上游许可全文见
 // test/fixtures/md2-golden/LICENSE）。
 // 本仓库整体以 GPL-3.0 分发（见根目录 LICENSE）；上面的 MIT 标识说明的是
-// 本文件自身的许可，不改变 TizuMark 的整体许可。
+// 本文件自身的许可，不改变 TuziMark 的整体许可。
 // md2 表格 AST → HTML（对应 md2 crates/md2-core/src/html.rs 的表部分）。
 //
 // 与 md2 的**有意差异共两处**：
-//   1) 对齐用 TizuMark 既有的 align 属性（见 src/styles.css:2138 的
+//   1) 对齐用 TuziMark 既有的 align 属性（见 src/styles.css:2138 的
 //      th[align="center"] 选择器），而非 md2 的内联 style="text-align:"。
 //      该差异由一致性门禁的归一化吸收。
 //   2) 结尾 </table> 不带尾随换行（上游 html.rs:179 带 \n）。这是配合消费方的

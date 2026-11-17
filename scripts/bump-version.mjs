@@ -54,18 +54,18 @@ const edits = [
   ]],
   // i18n 三语：关于框版本文案 + 应用版本号（appVersion 也一并同步，避免关于框显示旧版本）
   ['src/modules/i18n-data.js', [
-    [/versionInfo:\s*'TizuMark v[0-9.]+'/g, `versionInfo: 'TizuMark v${next}'`],
+    [/versionInfo:\s*'TuziMark v[0-9.]+'/g, `versionInfo: 'TuziMark v${next}'`],
     [/appVersion:\s*'[0-9.]+'/g, `appVersion: '${next}'`],
   ]],
   ['src/index.html', [
-    [/(id="about-version"[^>]*>TizuMark v)[0-9.]+/, `$1${next}`],
+    [/(id="about-version"[^>]*>TuziMark v)[0-9.]+/, `$1${next}`],
   ]],
   // 更新清单：版本、下载 URL、文件名里的版本。签名值必须重新签一次才会有效，
   // 这里不动 signature —— 脚本会提示。
   ['update-windows-x86_64.json', [
     [/"version"\s*:\s*"[^"]+"/, `"version": "${next}"`],
     [/v[0-9]+\.[0-9]+\.[0-9]+\//g, `v${next}/`],
-    [/TizuMark_[0-9]+\.[0-9]+\.[0-9]+_/g, `TizuMark_${next}_`],
+    [/TuziMark_[0-9]+\.[0-9]+\.[0-9]+_/g, `TuziMark_${next}_`],
   ]],
 ];
 

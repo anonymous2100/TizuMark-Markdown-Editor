@@ -23,7 +23,7 @@
 | 旧式字符串 toast 兼容 | `'纯文本成功提示'` 旧调用仍正常 | PASS |
 | toast:false 走 setStatus | `E_INIT` 不弹 toast、改走 setStatus | PASS |
 
-> 注：stderr 中 `[TizuMark] 错误码 上下文 堆栈` 即为 `reportError` 写入 console 的**开发诊断信息**，证明「开发可诊断」链路生效。
+> 注：stderr 中 `[TuziMark] 错误码 上下文 堆栈` 即为 `reportError` 写入 console 的**开发诊断信息**，证明「开发可诊断」链路生效。
 
 ## 二、编码检测等价验证（4/4 通过，复现 Rust read_file 算法）
 

@@ -255,7 +255,7 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<TrayIcon> {
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &quit])?;
     TrayIconBuilder::new()
-        .tooltip("TizuMark")
+        .tooltip("TuziMark")
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
         .on_menu_event(|app, event| {
@@ -1157,7 +1157,7 @@ fn load_windows_registry_fonts(db: &mut fontdb::Database) {
 
 // Windows：启动时自愈 .md / .markdown 文件关联的「打开方式」（OpenWithProgids / Applications）。
 // 背景：NSIS 安装器每次安装/更新都会注册文件关联，但 Windows 偶发在应用更新后清掉
-// per-user 的 OpenWithProgids，导致右键「打开方式」里看不到 TizuMark。
+// per-user 的 OpenWithProgids，导致右键「打开方式」里看不到 TuziMark。
 // 这里仅检查缺失才补，只写 HKCU\Software\Classes 下最小键（与安装器同源），失败静默，不阻塞启动。
 #[cfg(target_os = "windows")]
 fn repair_file_association() {
@@ -1167,14 +1167,14 @@ fn repair_file_association() {
     const PROGID: &str = "Markdown";
     const EXTS: [&str; 2] = [".md", ".markdown"];
 
-    // 当前可执行文件路径（例如 C:\...\TizuMark\tizumark.exe）
+    // 当前可执行文件路径（例如 C:\...\TuziMark\tuzimark.exe）
     let Ok(exe) = std::env::current_exe().map(|p| p.to_string_lossy().to_string()) else {
         return;
     };
     let exe_name = std::path::Path::new(&exe)
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "tizumark.exe".to_string());
+        .unwrap_or_else(|| "tuzimark.exe".to_string());
     let open_cmd = format!("\"{}\" \"%1\"", exe);
 
     let root = RegKey::predef(HKEY_CURRENT_USER);
@@ -1509,10 +1509,166 @@ pub fn run() {
             // 更新安装包磁盘缓存（下载落盘 / 查缓存 / 从缓存安装）
             download_update_to_file,
             find_cached_update,
-            install_cached_update
+            install_cached_update,
+            // PDF 导出：WebView2 PrintToPdf 直接落盘（无打印对话框 / 无下载气泡）
+            print_to_pdf
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+// PDF 导出落盘参数（单位：英寸 —— WebView2 PrintSettings 的约定）。
+// 用结构体传参而不是七八个散参数：命令注册表在 Windows / 非 Windows 两份实现之间
+// 必须保持同一签名，结构体最省心。
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PdfPrintOptions {
+    path: String,
+    page_width: f64,
+    page_height: f64,
+    margin_top: f64,
+    margin_bottom: f64,
+    margin_left: f64,
+    margin_right: f64,
+}
+
+// PDF 导出：直接用 WebView2 的 PrintToPdf 落盘，不经过系统打印对话框、也不经过浏览器下载流程。
+//
+// 原实现（前端 iframe + contentWindow.print()）会拉起 Chromium 的打印预览，用户「另存为 PDF」
+// 时走的是浏览器下载管线 —— 窗口右上角会弹出 Edge 风格的「下载 xxx.pdf」气泡（用户反馈
+// 2026-10-25）；而且打印帧是另建的 srcdoc 文档，需要手工把 appCSS / katex / hljs 样式拼进去，
+// 拼漏一项就与阅读模式不一致（用户反馈的公式重复、代码高亮丢失都出在这条路上）。
+//
+// PrintToPdf 打印的是当前 webview 自身：前端只需把页面切到「打印态」（藏掉工具条/侧栏、
+// 展开滚动容器），样式天然就是阅读模式那一套，不存在「两套 CSS 漂移」；调用返回即表示文件
+// 已落盘，全程无 UI、无气泡、无下载目录残留。
+//
+// 失败面：旧版 WebView2 运行时没有 ICoreWebView2_7::PrintToPdf。此时返回错误，前端据此
+// 回退到原来的系统打印路径，不会让 PDF 导出整个不可用。
+#[cfg(target_os = "windows")]
+#[tauri::command]
+async fn print_to_pdf(
+    window: tauri::WebviewWindow,
+    options: PdfPrintOptions,
+) -> Result<(), String> {
+    use std::sync::mpsc::channel;
+    use webview2_com::Microsoft::Web::WebView2::Win32::{
+        ICoreWebView2_2, ICoreWebView2_7, ICoreWebView2Controller2, ICoreWebView2Environment6,
+        COREWEBVIEW2_COLOR,
+    };
+    use webview2_com::PrintToPdfCompletedHandler;
+    use windows::core::{Interface, PCWSTR};
+
+    let (tx, rx) = channel::<Result<(), String>>();
+    let path = options.path.clone();
+    let opts = options;
+
+    window
+        .with_webview(move |platform| {
+            let tx_cb = tx.clone();
+            let core = match unsafe { platform.controller().CoreWebView2() } {
+                Ok(c) => c,
+                Err(e) => {
+                    let _ = tx.send(Err(format!("拿不到 CoreWebView2: {e}")));
+                    return;
+                }
+            };
+            unsafe {
+                // 打印前把控制器默认背景临时改成纯白，打印完在回调里恢复。
+                // 根因（2026-10-27 用户实锤）：tauri.conf.json 的 backgroundColor="#f5f5f5"
+                // （防白屏闪烁）会成为 WebView2 控制器的 DefaultBackgroundColor，而
+                // PrintToPdf **用它画 PDF 的物理页边距区**（canvas 上 root 背景画不到的
+                // 部分）——前端 printStyle 把 html/body 全钉成 #fff 也管不到那里，PDF
+                // 四周永远一圈 #f5f5f5 灰。Chrome/CDP 没有 DefaultBackgroundColor 概念，
+                // 所以同样的 CSS 在 Chrome 打印验证里是纯白、真机却带灰圈。
+                // 注 1：DefaultBackgroundColor 在 ICoreWebView2Controller2（WebView2 1.0.664，
+                // 2020-09），比 PrintToPdf 所需的 ICoreWebView2_7 老得多，无版本顾虑。
+                // 注 2：必须从**控制器对象**上 QueryInterface（Controller2 派生自
+                // ICoreWebView2Controller），从 ICoreWebView2 上 cast 是一条不同的接口链，
+                // 会直接 E_NOINTERFACE（0x80004002）——2026-10-27 用户实测踩到，导出失败。
+                // 注 3：这一步只是美化（去灰圈），拿不到就跳过，绝不阻断导出。
+                // 外层已在 unsafe 块内，无需再嵌一层
+                let controller2 = platform.controller().cast::<ICoreWebView2Controller2>().ok();
+                // orig_bg 兜底值必须与 tauri.conf.json 的 backgroundColor 一致：万一某些
+                // 运行时不支持 GetDefaultBackgroundColor，恢复时不至于把 A=0 的透明色写回去。
+                let mut orig_bg = COREWEBVIEW2_COLOR { A: 255, R: 245, G: 245, B: 245 };
+                if let Some(c2) = controller2.clone() {
+                    let _ = c2.DefaultBackgroundColor(&mut orig_bg);
+                    let _ = c2.SetDefaultBackgroundColor(COREWEBVIEW2_COLOR {
+                        A: 255, R: 255, G: 255, B: 255,
+                    });
+                }
+                let core7 = match core.cast::<ICoreWebView2_7>() {
+                    Ok(c) => c,
+                    Err(e) => {
+                        if let Some(c2) = controller2.clone() {
+                            let _ = c2.SetDefaultBackgroundColor(orig_bg);
+                        }
+                        let _ = tx.send(Err(format!("WebView2 运行时过旧（缺 PrintToPdf）: {e}")));
+                        return;
+                    }
+                };
+                // 打印设置：页面尺寸 + 四边边距 + 打印背景色 + 不要页眉页脚
+                let settings = (|| -> windows::core::Result<_> {
+                    let core2 = core.cast::<ICoreWebView2_2>()?;
+                    let env = core2.Environment()?;
+                    let env6 = env.cast::<ICoreWebView2Environment6>()?;
+                    let s = env6.CreatePrintSettings()?;
+                    s.SetPageWidth(opts.page_width)?;
+                    s.SetPageHeight(opts.page_height)?;
+                    s.SetMarginTop(opts.margin_top)?;
+                    s.SetMarginBottom(opts.margin_bottom)?;
+                    s.SetMarginLeft(opts.margin_left)?;
+                    s.SetMarginRight(opts.margin_right)?;
+                    let _ = s.SetShouldPrintBackgrounds(true);
+                    let _ = s.SetShouldPrintHeaderAndFooter(false);
+                    Ok(s)
+                })();
+                let settings = match settings {
+                    Ok(s) => s,
+                    Err(e) => {
+                        let _ = tx.send(Err(format!("打印设置失败: {e}")));
+                        return;
+                    }
+                };
+                let handler = PrintToPdfCompletedHandler::create(Box::new(move |hr, ok| {
+                    // 无论成败都把控制器默认背景恢复为打印前的值（#f5f5f5 防白闪）
+                    // （闭包在外层 unsafe 块内定义，无需再嵌 unsafe）
+                    if let Some(c2) = controller2.clone() {
+                        let _ = c2.SetDefaultBackgroundColor(orig_bg);
+                    }
+                    let r = if hr.is_ok() && ok {
+                        Ok(())
+                    } else {
+                        Err(format!("PrintToPdf 失败: {hr:?}"))
+                    };
+                    let _ = tx_cb.send(r);
+                    Ok(())
+                }));
+                // 路径转 UTF-16 + NUL 结尾（PrintToPdf 收 PCWSTR）
+                let wide: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
+                if let Err(e) = core7.PrintToPdf(PCWSTR(wide.as_ptr()), &settings, &handler) {
+                    let _ = tx.send(Err(format!("PrintToPdf 调用失败: {e}")));
+                }
+            }
+        })
+        .map_err(|e| format!("with_webview 失败: {e}"))?;
+
+    // 超长文档分页渲染可能要十几秒；180s 只兜异常挂死
+    match rx.recv_timeout(std::time::Duration::from_secs(180)) {
+        Ok(r) => r,
+        Err(_) => Err("PrintToPdf 超时（180s）".to_string()),
+    }
+}
+
+// 非 Windows 平台暂无 PrintToPdf 等价能力：明确报错，让前端回退系统打印
+#[cfg(not(target_os = "windows"))]
+#[tauri::command]
+async fn print_to_pdf(
+    _window: tauri::WebviewWindow,
+    _options: PdfPrintOptions,
+) -> Result<(), String> {
+    Err("当前平台暂不支持 PrintToPdf，回退系统打印".to_string())
 }
 
 #[cfg(test)]
@@ -1522,7 +1678,7 @@ mod tests {
     #[test]
     fn test_files_from_args_skips_exe() {
         let argv = vec![
-            "C:\\Program Files\\TizuMark\\TizuMark.exe".to_string(),
+            "C:\\Program Files\\TuziMark\\TuziMark.exe".to_string(),
             "D:\\docs\\note.md".to_string(),
         ];
         let files = files_from_args(argv);
@@ -1531,7 +1687,7 @@ mod tests {
 
     #[test]
     fn test_is_directory_distinguishes_dir_and_file() {
-        let tmp = std::env::temp_dir().join("tizumark_isdir_test");
+        let tmp = std::env::temp_dir().join("tuzimark_isdir_test");
         let _ = fs::remove_dir_all(&tmp);
         fs::create_dir_all(&tmp).unwrap();
         let file = tmp.join("a.md");
@@ -1544,13 +1700,13 @@ mod tests {
 
     #[test]
     fn test_files_from_args_empty_when_only_exe() {
-        let argv = vec!["TizuMark.exe".to_string()];
+        let argv = vec!["TuziMark.exe".to_string()];
         assert!(files_from_args(argv).is_empty());
     }
 
     #[test]
     fn test_search_in_files_recursive_and_filter() {
-        let tmp = std::env::temp_dir().join("tizumark_search_test_1");
+        let tmp = std::env::temp_dir().join("tuzimark_search_test_1");
         let _ = fs::remove_dir_all(&tmp);
         fs::create_dir_all(&tmp).unwrap();
         fs::write(tmp.join("a.md"), "hello world\nhello rust\n").unwrap();
@@ -1570,7 +1726,7 @@ mod tests {
 
     #[test]
     fn test_search_in_files_regex() {
-        let tmp = std::env::temp_dir().join("tizumark_search_test_2");
+        let tmp = std::env::temp_dir().join("tuzimark_search_test_2");
         let _ = fs::remove_dir_all(&tmp);
         fs::create_dir_all(&tmp).unwrap();
         fs::write(tmp.join("a.md"), "foo123bar\nfoo456\nno digits\n").unwrap();
@@ -1582,7 +1738,7 @@ mod tests {
 
     #[test]
     fn test_search_in_files_case_sensitivity() {
-        let tmp = std::env::temp_dir().join("tizumark_search_test_3");
+        let tmp = std::env::temp_dir().join("tuzimark_search_test_3");
         let _ = fs::remove_dir_all(&tmp);
         fs::create_dir_all(&tmp).unwrap();
         fs::write(tmp.join("a.md"), "Hello\nHELLO\nhello\n").unwrap();
@@ -1597,7 +1753,7 @@ mod tests {
 
     #[test]
     fn test_search_in_files_per_file_limit() {
-        let tmp = std::env::temp_dir().join("tizumark_search_test_4");
+        let tmp = std::env::temp_dir().join("tuzimark_search_test_4");
         let _ = fs::remove_dir_all(&tmp);
         fs::create_dir_all(&tmp).unwrap();
         let content: String = (0..600).map(|_| "x\n").collect();
@@ -1674,7 +1830,7 @@ mod tests {
 
     #[test]
     fn test_read_file_utf8() {
-        let tmp = std::env::temp_dir().join("tizumark_read_utf8_test.txt");
+        let tmp = std::env::temp_dir().join("tuzimark_read_utf8_test.txt");
         fs::write(&tmp, "hello 中文").unwrap();
         let res = read_file(tmp.to_str().unwrap().to_string());
         assert!(res.is_ok(), "读取 UTF-8 文件应成功");
@@ -1684,7 +1840,7 @@ mod tests {
 
     #[test]
     fn test_read_file_gb18030() {
-        let tmp = std::env::temp_dir().join("tizumark_read_gbk_test.txt");
+        let tmp = std::env::temp_dir().join("tuzimark_read_gbk_test.txt");
         let s = "中文内容测试";
         let (encoded, _enc, _err) = GB18030.encode(s);
         fs::write(&tmp, encoded.as_ref()).unwrap();
@@ -1697,7 +1853,7 @@ mod tests {
     #[test]
     fn test_read_file_missing_returns_structured_error() {
         let path = std::env::temp_dir()
-            .join("tizumark_does_not_exist_xyz_12345.md");
+            .join("tuzimark_does_not_exist_xyz_12345.md");
         let res = read_file(path.to_str().unwrap().to_string());
         assert!(res.is_err(), "读取不存在文件应返回错误");
         let err = res.unwrap_err();
@@ -1706,7 +1862,7 @@ mod tests {
 
     #[test]
     fn test_write_file_then_read_back() {
-        let tmp = std::env::temp_dir().join("tizumark_write_test.txt");
+        let tmp = std::env::temp_dir().join("tuzimark_write_test.txt");
         let _ = fs::remove_file(&tmp);
         let content = "# 标题\n\n正文内容";
         let w = write_file(tmp.to_str().unwrap().to_string(), content.to_string());
@@ -1764,7 +1920,7 @@ mod tests {
 
     #[test]
     fn test_file_meta_existing_file() {
-        let tmp = std::env::temp_dir().join("tizumark_meta_test.txt");
+        let tmp = std::env::temp_dir().join("tuzimark_meta_test.txt");
         fs::write(&tmp, "hello meta").unwrap();
         let res = file_meta(tmp.to_str().unwrap().to_string());
         assert!(res.is_ok());
@@ -1776,7 +1932,7 @@ mod tests {
 
     #[test]
     fn test_file_meta_missing_and_dir_return_none() {
-        let missing = std::env::temp_dir().join("tizumark_meta_missing_xyz.md");
+        let missing = std::env::temp_dir().join("tuzimark_meta_missing_xyz.md");
         assert_eq!(file_meta(missing.to_str().unwrap().to_string()).unwrap().is_none(), true, "不存在应为 None");
         let dir = std::env::temp_dir();
         assert!(file_meta(dir.to_str().unwrap().to_string()).unwrap().is_none(), "目录应为 None（仅文件有元数据）");
@@ -1784,7 +1940,7 @@ mod tests {
 
     #[test]
     fn test_list_dir_filters_and_sorts() {
-        let base = std::env::temp_dir().join("tizumark_listdir_test");
+        let base = std::env::temp_dir().join("tuzimark_listdir_test");
         let _ = fs::remove_dir_all(&base);
         fs::create_dir_all(base.join("zdir")).unwrap();
         fs::write(base.join("b.txt"), "t").unwrap();
@@ -1802,7 +1958,7 @@ mod tests {
 
     #[test]
     fn test_write_binary_file_roundtrip() {
-        let tmp = std::env::temp_dir().join("tizumark_bin_test.bin");
+        let tmp = std::env::temp_dir().join("tuzimark_bin_test.bin");
         let _ = fs::remove_file(&tmp);
         let data = vec![0u8, 1, 2, 255, 254, 128];
         write_binary_file(tmp.to_str().unwrap().to_string(), data.clone()).expect("写二进制应成功");
@@ -1812,7 +1968,7 @@ mod tests {
 
     #[test]
     fn test_ensure_dir_creates_nested() {
-        let base = std::env::temp_dir().join("tizumark_ensure_dir_test");
+        let base = std::env::temp_dir().join("tuzimark_ensure_dir_test");
         let _ = fs::remove_dir_all(&base);
         let nested = base.join("a").join("b").join("c");
         ensure_dir(nested.to_str().unwrap().to_string()).expect("应递归创建目录");
@@ -1824,7 +1980,7 @@ mod tests {
 
     #[test]
     fn test_save_image_to_assets_md5_naming_and_size() {
-        let assets = std::env::temp_dir().join("tizumark_assets_test");
+        let assets = std::env::temp_dir().join("tuzimark_assets_test");
         let _ = fs::remove_dir_all(&assets);
         let bytes = tiny_png_bytes();
         let info = save_image_to_assets(bytes.clone(), "png".into(), assets.to_str().unwrap().to_string())
@@ -1841,7 +1997,7 @@ mod tests {
 
     #[test]
     fn test_save_image_to_assets_unknown_format_zero_size() {
-        let assets = std::env::temp_dir().join("tizumark_assets_unknown_test");
+        let assets = std::env::temp_dir().join("tuzimark_assets_unknown_test");
         let _ = fs::remove_dir_all(&assets);
         let info = save_image_to_assets(vec![1, 2, 3, 4], "bin".into(), assets.to_str().unwrap().to_string())
             .expect("未知格式也应能保存");
@@ -1851,7 +2007,7 @@ mod tests {
 
     #[test]
     fn test_fetch_image_as_base64_local_file() {
-        let tmp = std::env::temp_dir().join("tizumark_b64_test.png");
+        let tmp = std::env::temp_dir().join("tuzimark_b64_test.png");
         let bytes = tiny_png_bytes();
         fs::write(&tmp, &bytes).unwrap();
         let encoded = test_block_on(fetch_image_as_base64(tmp.to_str().unwrap().to_string()))
@@ -1864,7 +2020,7 @@ mod tests {
 
     #[test]
     fn test_fetch_image_as_base64_missing_file_err() {
-        let missing = std::env::temp_dir().join("tizumark_b64_missing_xyz.png");
+        let missing = std::env::temp_dir().join("tuzimark_b64_missing_xyz.png");
         let res = test_block_on(fetch_image_as_base64(missing.to_str().unwrap().to_string()));
         assert!(res.is_err(), "不存在的本地文件应返回错误");
     }

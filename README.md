@@ -1,12 +1,12 @@
-# TizuMark
+# TuziMark
 
-**TizuMark** is a lightweight, open-source **Markdown editor** for Windows with WYSIWYG live preview, outline navigation, KaTeX & Mermaid support — a free **Typora alternative** built with Tauri + Rust.
+**TuziMark** is a lightweight, open-source **Markdown editor** for Windows with WYSIWYG live preview, outline navigation, KaTeX & Mermaid support — a free **Typora alternative** built with Tauri + Rust.
 
 🌐 **简体中文** | [English](README.en.md) | [Español](README.es.md)
 
 <div align="center">
 
-![TizuMark](icon.png)
+![TuziMark](icon.png)
 
 </div>
 
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.2.6-blue" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.2.5-blue" alt="Version">
   <img src="https://img.shields.io/badge/Windows-7%2B-brightgreen" alt="Windows">
   <img src="https://img.shields.io/badge/macOS-Planned-lightgrey" alt="macOS">
   <img src="https://img.shields.io/badge/Linux-Planned-lightgrey" alt="Linux">
@@ -29,21 +29,21 @@
 <p align="center" style="font-size:1.15em"><b>安装包仅 ~7MB · 内存占用 < 50MB · 双击即开</b></p>
 
 <p align="center">
-  <img src="demo.gif" alt="TizuMark 功能演示" width="880">
+  <img src="demo.gif" alt="TuziMark 功能演示" width="880">
 </p>
 
 ---
 
-## 为什么你需要 TizuMark？
+## 为什么你需要 TuziMark？
 
 <p align="center"><b>打开、查看、编辑、导出——就是这么简单。</b></p>
 
-市面上不缺 Markdown 编辑器，但大多走向两个极端：要么是动辄几百 MB 的"重型武器"，要么功能简陋得无法日常使用。TizuMark 卡在中间，刚好合适——把写作者最在意的几件事做到极致。
+市面上不缺 Markdown 编辑器，但大多走向两个极端：要么是动辄几百 MB 的"重型武器"，要么功能简陋得无法日常使用。TuziMark 卡在中间，刚好合适——把写作者最在意的几件事做到极致。
 
-| 痛点 | 常见方案 | ✨ TizuMark |
+| 痛点 | 常见方案 | ✨ TuziMark |
 |---|---|---|
 | 🐢 **太重** | 几百 MB 内存、几个 G 安装包，启动等半天 | **Rust 原生引擎，安装包 ~7MB、内存 <50MB，双击一秒即开** |
-| 👯 **分屏** | 源码和渲染各一屏，看文档得来回切窗口 | **阅读、源码、实时预览三模式，编辑/预览滚动自动同步** |
+| 👯 **分屏** | 源码和渲染各一屏，看文档得来回切窗口 | **阅读、源码、实时预览三模式，左右/上下分屏 + 滚动自动同步，另有 Typora 式所见即所得** |
 | 🌀 **长文档** | 滚轮滚到手酸，回头找段落得翻半天 | **大纲自动解析标题层级，一键跳转任意章节** |
 | 🧩 **画公式/图** | 装 LaTeX、切画图工具、导出再粘贴 | **内置 KaTeX 与 Mermaid，公式与图表代码即渲染** |
 
@@ -51,16 +51,17 @@
 
 ## ✨ 核心特色
 
-> TizuMark 卡在"重型 IDE"和"简陋记事本"之间，刚好合适——把写作者最在意的几件事做到极致。
+> TuziMark 卡在"重型 IDE"和"简陋记事本"之间，刚好合适——把写作者最在意的几件事做到极致。
 
 - ⚡ **极速轻量**：基于 **Rust + Tauri v2**（系统原生 WebView），安装包约 **7MB**、内存占用 **< 50MB**，双击一秒即开，比 Electron 类应用省 4/5 内存。
-- 👁️ **实时预览**：左边写、右边渲染，编辑/预览滚动自动同步，无需来回切换窗口。
+- 👁️ **实时预览（所见即所得）**：像 Typora 一样直接在排版好的正文上写作，正文始终是渲染效果，光标所在块才就地显示源码；表格格内直接编辑、任务列表直接勾选、代码块带语法高亮——编辑态与阅读态像素级对齐。
+- 🪟 **左右 / 上下分屏**：源码模式下一键切换分屏方向（双击分隔条或点按钮），分屏比例自由拖拽并自动记忆；编辑器/预览可分别折叠成贴边半圆把手，想只看源码或只看成稿都行。
 - 🧠 **按文件类型智能切换视图**：Markdown 自动分屏预览/编辑；纯文本与代码一键纯编辑（无预览栏）；图片自动只读预览——每种文件都给最合适的形式。
 - 🧭 **智能大纲导航**：自动解析标题层级，一键跳转任意章节，长文档永不迷路。
 - 📐 **内置 KaTeX 数学公式**：行内公式、独立公式块、矩阵、方程组全支持，兼容 `$…$` / `$$…$$` 与 LaTeX 习惯的 `\(…\)` / `\[…\]` 定界符——写论文、做笔记、记公式直接搞定。
 - 📊 **内置 Mermaid 图表**：流程图、时序图、甘特图、类图、状态图……**用代码画图，自动跟随明暗主题切换配色**，支持 ELK 自动布局引擎。
 - 🖼️ **图片粘贴即插入**：截图/拖拽直接粘贴，支持 assets 目录存储或 Base64 内联，自动去重；支持 Obsidian 风格嵌入 `![[图片路径]]`（可带 `|600` 尺寸）；导出时相对路径解析与预览完全一致。
-- 📤 **多种导出**：HTML 单文件（完整样式、完全离线）、高清长图 PNG、PDF（系统打印对话框）、**Word DOCX**（公式与图表转图片、图片自动等比缩放不撑破页面），均保留暗黑/亮色主题样式。
+- 📤 **多种导出**：HTML 单文件（完整样式、完全离线）、高清长图 PNG、PDF（一键导出，极旧运行时自动回退系统打印）、**Word DOCX**（公式与图表转图片、图片自动等比缩放不撑破页面），均保留暗黑/亮色主题样式。
 - ⌨️ **快捷键全自定义**：每一条快捷键都能在 `文件 → 快捷键设置` 中改键，贴合你的肌肉记忆。
 - 📂 **多标签页 + 工作区**：同时编辑多个文件、拖拽批量打开、文件夹工作区、`.md` 文件关联。
 - 🚀 **海量文档流畅预览**：数万行超大文档采用滑动窗口 + 虚拟渲染，只渲染当前阅读区域，编辑器永不卡顿；外部磁盘变更自动检测并提示重新加载，多工具协作不丢稿。
@@ -76,7 +77,7 @@
 |---|---|---|
 | GFM 完整语法高亮 | 实时同步滚动 | 导出 HTML 单文件（完整样式） |
 | 代码块 100+ 语言着色 | KaTeX 数学公式渲染 | 导出高清长图 PNG |
-| 查找替换（支持正则） | Mermaid 流程图/时序图/甘特图/状态图 | 导出 PDF（系统打印对话框） |
+| 查找替换（支持正则） | Mermaid 流程图/时序图/甘特图/状态图 | 导出 PDF（一键导出 / 打印回退） |
 | 跨文件搜索（`Ctrl+H`） | Emoji 短代码 (`:rocket:` → 🚀) | 保留暗黑/亮色主题样式 |
 | 可折叠格式工具栏 | 图片查看器（拖拽平移 + 滚轮缩放） | 完全离线，无需联网 |
 | 自动补全括号、引号 | 自适应图片尺寸 | 中英文 Emoji 完美适配 |
@@ -88,9 +89,9 @@
 | 大纲导航一键跳转 | 亮色 / 暗黑 / 跟随系统 | CLI 命令行打开文件 |
 | 文件夹工作区（侧边栏文件树） | 字体大小/行高/内容宽度可调 | 文件关联 .md / .markdown |
 | 跨文件搜索（Ctrl+H）/ 文件搜索（Ctrl+P 按文件名或路径跳转） | Tab 宽度 / 自动换行开关 | 最近打开文件列表 |
-| 标签页拖拽排序 | 代码块行号 / 代码自动换行开关 | 未保存状态标记 + 关闭提醒 |
+| 标签页拖拽排序、右键重命名 | 代码块行号 / 代码自动换行开关 | 未保存状态标记 + 关闭提醒 |
 | 拖拽、批量打开文件 | 全套快捷键可自定义 | 系统托盘（可隐藏）+ 关闭行为可选 + 全局热键唤回 |
-| 编辑/预览分屏比例自由拖拽 | 导入自定义字体（编辑器/预览分别指定） | 状态栏实时字数统计 |
+| 左右/上下分屏一键切换、比例自由拖拽并记忆 | 导入自定义字体（编辑器/预览分别指定） | 状态栏实时字数统计 |
 | 预览内查找（支持正则）+ 复制为 HTML | 5 套配色方案 + 字体选择（系统全量可搜索 / 导入本地） | 外部变更检测 + 重新加载提示 |
 | 软换行（回车即换行）开关 | 中 / 英 / 西 界面语言一键切换 | 表格单元格内 `<br>` 换行 |
 | 会话记忆（重启恢复标签页/文件夹） | 自绘无边框窗口（自定义最小化/最大化/关闭） | |
@@ -146,7 +147,7 @@
 
 > 首次打开会自动展示使用说明，也可在 `帮助 → 使用说明` 中随时查看。
 
-> 🔔 **首次安装 / 版本升级后，TizuMark 会自动打开使用说明和完整语法演示 demo.md，帮你快速上手新功能。**
+> 🔔 **首次安装 / 版本升级后，TuziMark 会自动打开使用说明和完整语法演示 demo.md，帮你快速上手新功能。**
 
 📖 想一眼看全所有语法效果？打开 [demo.md](demo.md) 查看完整语法演示。
 
@@ -167,7 +168,7 @@
 
 - Node.js ≥ 22
 - Rust stable（MSVC 目标）
-- VS C++ Build Tools 2022（最小组件即可，无需完整 VS IDE）
+- VS C++ 生成工具：已装 VS 2022 / VS 2026（含 Insiders）或 Build Tools 的任一实例即直接复用，**无需为项目另装**；一个都没有时脚本才装 Build Tools 最小集
 - WebView2 Runtime（Win10/11 一般自带）
 
 ```powershell
@@ -176,7 +177,7 @@ git clone https://github.com/tizuio/TizuMark-Markdown-Editor.git
 git clone https://gitee.com/tizu/TizuMark-Markdown-Editor.git
 cd TizuMark-Markdown-Editor
 
-# 一键初始化环境（VS BuildTools 最小 + Rust + Node）
+# 一键初始化环境（复用已有 VS 的 MSVC，缺则装 Build Tools 最小集 + Rust + Node）
 powershell -ExecutionPolicy Bypass -File .\scripts\setup-dev.ps1
 # 重开终端后验证：
 powershell -ExecutionPolicy Bypass -File .\scripts\setup-dev.ps1 -VerifyOnly
@@ -219,7 +220,7 @@ npm run build    # 构建发布版本（发布流程见 CLAUDE.md）
 ## 常见问题
 
 <details open>
-<summary><b>TizuMark 是免费的吗？</b></summary>
+<summary><b>TuziMark 是免费的吗？</b></summary>
 
 是的，永久免费且开源。基础功能没有任何限制。
 </details>
@@ -250,9 +251,9 @@ npm run build    # 构建发布版本（发布流程见 CLAUDE.md）
 
 <p align="center"><b>一个人的开源，全靠你的支持续命。</b></p>
 
-做 TizuMark 的原因很简单：用了很多 Markdown 工具，不是太臃肿就是不好用，干脆自己撸一个。
+做 TuziMark 的原因很简单：用了很多 Markdown 工具，不是太臃肿就是不好用，干脆自己撸一个。
 
-如果 TizuMark 帮到了你——看文档更轻松了、写东西更顺手了、导出的图让人夸好看了——希望能支持一下。您的鼓励会让我实实在在地开心一整天，也意味着这个项目可以活得更久。
+如果 TuziMark 帮到了你——看文档更轻松了、写东西更顺手了、导出的图让人夸好看了——希望能支持一下。您的鼓励会让我实实在在地开心一整天，也意味着这个项目可以活得更久。
 
 不方便打赏也没关系，点个 Star、发给朋友、或者在群里说一声"好用"，就已经是莫大的鼓励。
 
@@ -298,7 +299,7 @@ npm run build    # 构建发布版本（发布流程见 CLAUDE.md）
 
 ## 许可证
 
-Copyright (c) 2024-2026 TizuMark
+Copyright (c) 2024-2026 TuziMark
 
 本软件基于 [GNU General Public License v3.0](LICENSE) 开源发布。你可以自由使用、修改和分发，但衍生作品必须延续 GPL v3 协议。
 
@@ -307,7 +308,7 @@ Copyright (c) 2024-2026 TizuMark
 ---
 
 <p align="center">
-  <b>✨ TizuMark — 轻得不像话，快得刚刚好</b><br><br>
+  <b>✨ TuziMark — 轻得不像话，快得刚刚好</b><br><br>
   <a href="https://github.com/tizuio/TizuMark-Markdown-Editor/releases"><img src="https://img.shields.io/badge/⬇_GitHub_下载-black?style=for-the-badge&logo=github" alt="GitHub Download"></a>
   &nbsp;
   <a href="https://gitee.com/tizu/TizuMark-Markdown-Editor/releases"><img src="https://img.shields.io/badge/⬇_Gitee_下载-C71D23?style=for-the-badge&logo=gitee" alt="Gitee Download"></a>

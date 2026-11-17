@@ -13,7 +13,7 @@
 
 用途：`test/md2-conformance.test.cjs` 的一致性门禁。归一化后比较
 表格骨架、colspan/rowspan、covered 省略、单元格文本与对齐。
-**不**比较单元格内部的标记细节（md2 输出裸行内内容，TizuMark 回灌 unified 会加 `<p>` 包裹）。
+**不**比较单元格内部的标记细节（md2 输出裸行内内容，TuziMark 回灌 unified 会加 `<p>` 包裹）。
 
 同步日期：2026-09-13（含后续补入的 `grid_alignment`）
 

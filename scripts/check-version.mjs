@@ -35,8 +35,8 @@ function checkVersion(file, pattern, { count = 1 } = {}) {
 checkVersion('src-tauri/Cargo.toml', /^version\s*=\s*"([^"]+)"/m, { label: 'Cargo.toml' });
 checkVersion('src-tauri/tauri.conf.json', /"version"\s*:\s*"([^"]+)"/, { label: 'tauri.conf.json' });
 // versionInfo 文案随 i18n 字典搬到 src/modules/i18n-data.js（zh/en/es 各一处）
-checkVersion('src/modules/i18n-data.js', /versionInfo:\s*'TizuMark v([^']+)'/, { count: 3, label: 'i18n-data.js versionInfo(zh/en/es)' });
-checkVersion('src/index.html', /id="about-version"[^>]*>TizuMark v([^<]+)</, { label: 'index.html about-version' });
+checkVersion('src/modules/i18n-data.js', /versionInfo:\s*'TuziMark v([^']+)'/, { count: 3, label: 'i18n-data.js versionInfo(zh/en/es)' });
+checkVersion('src/index.html', /id="about-version"[^>]*>TuziMark v([^<]+)</, { label: 'index.html about-version' });
 checkVersion('README.md', /Version-([0-9.]+)-blue/, { label: 'README.md badge' });
 checkVersion('README.en.md', /Version-([0-9.]+)-blue/, { label: 'README.en.md badge' });
 checkVersion('README.es.md', /Version-([0-9.]+)-blue/, { label: 'README.es.md badge' });

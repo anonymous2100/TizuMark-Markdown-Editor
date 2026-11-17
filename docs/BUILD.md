@@ -8,7 +8,7 @@
 
 1. 检查 Node / Rust / MSVC 工具链
 2. 问你要不要升版本号（**直接回车 = 保持当前版本不变**）
-3. 结束正在运行的 TizuMark（不关掉的话 exe 被占用会编译失败）
+3. 结束正在运行的 TuziMark（不关掉的话 exe 被占用会编译失败）
 4. 编译三种安装包（Rust release 编译，一般 2~5 分钟）
 5. 把产物复制到两个地方
 
@@ -17,13 +17,13 @@
 | 目录 | 用途 |
 |------|------|
 | `release\` | 工程内归档（和以前一样） |
-| `..\TizuMark-dist\`（即工程上一级） | **推荐从这里运行绿色版** |
+| `..\TuziMark-dist\`（即工程上一级） | **推荐从这里运行绿色版** |
 
 三个文件：
 
-- `TizuMark_<版本>_x64-setup.exe` — NSIS 安装包（推荐给普通用户）
-- `TizuMark_<版本>_x64_en-US.msi` — MSI（企业批量部署）
-- `TizuMark_<版本>_x64.exe` — 绿色版（免安装）
+- `TuziMark_<版本>_x64-setup.exe` — NSIS 安装包（推荐给普通用户）
+- `TuziMark_<版本>_x64_en-US.msi` — MSI（企业批量部署）
+- `TuziMark_<版本>_x64.exe` — 绿色版（免安装）
 
 ## ⚠️ 重要：不要从 `release\` 里双击绿色版
 
@@ -33,15 +33,15 @@
 
 所以：
 
-- 要装机器 → 用 `TizuMark_<版本>_x64-setup.exe`（安装到 `%LOCALAPPDATA%\TizuMark`，在工程外，正常）
-- 要用绿色版 → 从 `..\TizuMark-dist\` 里运行，**不要**从 `release\` 直接双击
+- 要装机器 → 用 `TuziMark_<版本>_x64-setup.exe`（安装到 `%LOCALAPPDATA%\TuziMark`，在工程外，正常）
+- 要用绿色版 → 从 `..\TuziMark-dist\` 里运行，**不要**从 `release\` 直接双击
 
 ### 已经卡住了怎么办
 
-任务管理器结束所有 `tizumark.exe` / `TizuMark_*.exe` 进程，然后从工程外重新启动。或者直接用命令行：
+任务管理器结束所有 `tuzimark.exe` / `TuziMark_*.exe` 进程，然后从工程外重新启动。或者直接用命令行：
 
 ```powershell
-Get-Process | Where-Object { $_.ProcessName -match '^(tizumark|TizuMark)' } | Stop-Process -Force
+Get-Process | Where-Object { $_.ProcessName -match '^(tuzimark|TuziMark)' } | Stop-Process -Force
 ```
 
 ## 命令行参数
@@ -85,6 +85,7 @@ Get-Process | Where-Object { $_.ProcessName -match '^(tizumark|TizuMark)' } | St
 | 现象 | 原因 / 处理 |
 |------|------------|
 | `build failed` 且提示版本号不一致 | 三处 `version` 不同；跑 `node scripts/check-version.mjs` 看具体哪个文件 |
-| 编译时提示文件被占用 | 还有 TizuMark 在运行；脚本第 3 步会杀，但托盘里的实例可能刚重启 |
+| 编译时提示文件被占用 | 还有 TuziMark 在运行；脚本第 3 步会杀，但托盘里的实例可能刚重启 |
 | 找不到 `vcvars64.bat` | 缺 Visual Studio C++ 生成工具，见 `docs/DEV_SETUP.md` |
 | 找不到 `playwright` | 只影响浏览器截图类校验脚本，不影响打包 |
+| `failed to bundle project: timeout: global`，日志停在 `Downloading .../wix314-binaries.zip` | Tauri 首次打 MSI 要从 GitHub 下载 WiX 到 `%LOCALAPPDATA%\tauri\WixTools314`，国内直连易超时（证书吊销检查也可能报 `CRYPT_E_NO_REVOCATION_CHECK`）。手动下载 `https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip`（SHA256 `6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31`），解压到该目录（`candle.exe`/`light.exe` 直接位于目录下）后重跑即可；NSIS 工具链同理缓存在 `%LOCALAPPDATA%\tauri\NSIS` |

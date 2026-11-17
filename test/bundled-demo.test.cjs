@@ -49,17 +49,17 @@ test('打包 demo 图片：dev 模式下 filePath 拼本地失败时回退到 re
       return undefined;
     },
   }, async (w, ed) => {
-    // 模拟 dev 模式：filePath 是 prod 目录（C:\\Program Files\\TizuMark\\demo.md），
+    // 模拟 dev 模式：filePath 是 prod 目录（C:\\Program Files\\TuziMark\\demo.md），
     // 本地根本不存在该目录，fetch_image_as_base64 必然失败，应回退到 read_bundled_image_as_base64。
     // isBundled: true 标记该 tab 为打包资源（使用说明/demo），只有这类 tab 才允许回退。
-    ed.tabs = [{ filePath: 'C:\\Program Files\\TizuMark\\demo.md', name: 'demo.md', isBundled: true }];
+    ed.tabs = [{ filePath: 'C:\\Program Files\\TuziMark\\demo.md', name: 'demo.md', isBundled: true }];
     ed.activeTabIndex = 0;
     ed.preview.innerHTML = '<img src="assets/icon.png" width="400" alt="限制宽度展示">';
     await ed.processImages();
     const fetchCalls = calls.filter(c => c.cmd === 'fetch_image_as_base64');
     const bundledCalls = calls.filter(c => c.cmd === 'read_bundled_image_as_base64');
     assert.equal(fetchCalls.length, 1, 'filePath 拼路径应先尝试 fetch_image_as_base64');
-    assert.equal(fetchCalls[0].args.url, 'C:\\Program Files\\TizuMark/assets/icon.png',
+    assert.equal(fetchCalls[0].args.url, 'C:\\Program Files\\TuziMark/assets/icon.png',
       '应按 dev 模式 tab.filePath 拼出图片绝对路径');
     assert.equal(bundledCalls.length, 1, 'fetch 失败后应回退到 read_bundled_image_as_base64');
     assert.equal(bundledCalls[0].args.filename, 'assets/icon.png',

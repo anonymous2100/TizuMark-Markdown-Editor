@@ -1,14 +1,14 @@
-# TizuMark one-click build script (called by build.cmd in the repo root).
+# TuziMark one-click build script (called by build.cmd in the repo root).
 #
 # NOTE: This file is intentionally ASCII-only. Windows PowerShell 5.1 reads
 # BOM-less files as ANSI, so non-ASCII text here would be garbled and can even
 # break parsing. User-facing Chinese guidance lives in docs/BUILD.md.
 #
 # What it does:
-#   1. Check toolchain (Node / Rust / MSVC), stop any running TizuMark
+#   1. Check toolchain (Node / Rust / MSVC), stop any running TuziMark
 #   2. Optionally bump the version (9 places, via Node so no BOM corruption)
 #   3. Build the three artifacts (NSIS / MSI / portable exe)
-#   4. Copy artifacts to release\ and to ..\TizuMark-dist (outside the repo)
+#   4. Copy artifacts to release\ and to ..\TuziMark-dist (outside the repo)
 #
 # Why artifacts are also copied outside the repo:
 #   Measured on this machine: launching the exe from inside the project folder
@@ -16,7 +16,7 @@
 #   exists), while the identical exe works fine from any folder outside the
 #   project. That hung process keeps the single-instance lock, so every later
 #   launch silently exits - which looks exactly like "the app will not open".
-#   Run the portable build from TizuMark-dist, or use the installer.
+#   Run the portable build from TuziMark-dist, or use the installer.
 #
 # Usage:
 #   .\scripts\build-release.ps1                 # interactive (asks for version)
@@ -92,7 +92,7 @@ try {
 } catch { }
 
 Write-Host ''
-Write-Host '  TizuMark build' -ForegroundColor White
+Write-Host '  TuziMark build' -ForegroundColor White
 Write-Host "  repo: $root" -ForegroundColor DarkGray
 
 # ------------------------------------------------------------ 1. toolchain
@@ -157,11 +157,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ------------------------------------------------------ 3. stop old process
-Write-Step '3/5  Stop running TizuMark'
+Write-Step '3/5  Stop running TuziMark'
 
 $killed = 0
 Get-Process -ErrorAction SilentlyContinue |
-  Where-Object { $_.ProcessName -match '^(tizumark|TizuMark)' } |
+  Where-Object { $_.ProcessName -match '^(tuzimark|TuziMark)' } |
   ForEach-Object {
     Write-Host "    stop $($_.ProcessName) (PID $($_.Id))" -ForegroundColor DarkGray
     try { Stop-Process -Id $_.Id -Force -ErrorAction Stop; $killed++ } catch { }
@@ -184,7 +184,7 @@ if ($buildExit -ne 0) {
   Write-Host ''
   Write-Host '  common causes:' -ForegroundColor Yellow
   Write-Host '    - the three version fields differ (package.json / tauri.conf.json / Cargo.toml)' -ForegroundColor DarkGray
-  Write-Host '    - TizuMark still running and locking the exe' -ForegroundColor DarkGray
+  Write-Host '    - TuziMark still running and locking the exe' -ForegroundColor DarkGray
   Write-Host "    - full log: $logFile" -ForegroundColor DarkGray
   Pause-IfNeeded; exit 1
 }
@@ -194,13 +194,13 @@ Write-Ok 'build finished'
 Write-Step '5/5  Archive artifacts'
 
 $artifacts = @(
-  @{ Rel = "src-tauri\target\release\bundle\nsis\TizuMark_${currentVersion}_x64-setup.exe"; Name = "TizuMark_${currentVersion}_x64-setup.exe" },
-  @{ Rel = "src-tauri\target\release\bundle\msi\TizuMark_${currentVersion}_x64_en-US.msi"; Name = "TizuMark_${currentVersion}_x64_en-US.msi" },
-  @{ Rel = "src-tauri\target\release\TizuMark_${currentVersion}_x64.exe"; Name = "TizuMark_${currentVersion}_x64.exe" }
+  @{ Rel = "src-tauri\target\release\bundle\nsis\TuziMark_${currentVersion}_x64-setup.exe"; Name = "TuziMark_${currentVersion}_x64-setup.exe" },
+  @{ Rel = "src-tauri\target\release\bundle\msi\TuziMark_${currentVersion}_x64_en-US.msi"; Name = "TuziMark_${currentVersion}_x64_en-US.msi" },
+  @{ Rel = "src-tauri\target\release\TuziMark_${currentVersion}_x64.exe"; Name = "TuziMark_${currentVersion}_x64.exe" }
 )
 
 $releaseDir = Join-Path $root 'release'
-$outsideDir = Join-Path (Split-Path -Parent $root) 'TizuMark-dist'
+$outsideDir = Join-Path (Split-Path -Parent $root) 'TuziMark-dist'
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 New-Item -ItemType Directory -Force -Path $outsideDir | Out-Null
 

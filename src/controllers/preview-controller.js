@@ -28,14 +28,46 @@
   const PREVIEW_WINDOW_LINES = 1200;  // 窗口源码行数上限
   const PREVIEW_WINDOW_LEAD = 200;    // 焦点行前预留行数（让焦点不至于贴顶）
 
+  // 系统挂起（合盖睡眠）时 requestAnimationFrame 可能永久停摆。渲染链里所有
+  // await rAF / rAF 回调都必须带超时兜底，否则 Promise 永不 resolve、finally 不执行
+  // → pane-loading 遮罩与 _canScroll 双锁永久残留，表现为唤醒后界面无响应。
+  // 正常环境 rAF 在 ~16ms 内先触发并清掉兜底定时器，渲染时序完全不变。
+  const FRAME_FALLBACK_MS = 200;
+  function onFrameOrTimeout(fn) {
+    let done = false;
+    let timer = null;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      if (timer) clearTimeout(timer);
+      fn();
+    };
+    timer = setTimeout(finish, FRAME_FALLBACK_MS);
+    try {
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(finish);
+      else finish();
+    } catch (_) { finish(); }
+  }
+  function nextFrame() {
+    return new Promise(resolve => onFrameOrTimeout(resolve));
+  }
+
   class PreviewController {
     constructor(app) {
       this.app = app;
     }
 
     // 文档化 facade API：render() 即原 updatePreview；setDark/refresh 供后续批次调用。
+    // setDark 必须走主题模块的**唯一出口** _applyThemeToDom：只写 this.app.isDark 而不落到 DOM，
+    // 等于重新造一条「主题只换一半」的路径（2026-10-25 把 applyThemeMode / toggleTheme 的
+    // 六步 DOM 应用收口成 _applyThemeToDom 正是为了杜绝这类分叉）。值没变时直接返回，
+    // 避免无谓地重渲染全部 mermaid 图表。
     setDark(dark) {
-      this.app.isDark = !!dark;
+      const next = !!dark;
+      if (this.app.isDark === next) return Promise.resolve();
+      this.app.isDark = next;
+      this.app._applyThemeToDom();
+      return this.app.rerenderMermaid();
     }
 
     refresh() {
@@ -144,7 +176,8 @@
         // 仅在 loading 遮罩可见时，让出主线程两帧确保遮罩先绘制（避免大文档同步渲染期间“无 loading 白屏”）；普通打字刷新不额外延迟
         const loadingEl = document.getElementById('pane-loading');
         if (loadingEl && !loadingEl.classList.contains('hidden')) {
-          await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+          await nextFrame();
+          await nextFrame();
         }
 
         // P0-0d 产物韧性：unified-bundle.js 缺失/加载失败时，这里原本是裸 ReferenceError
@@ -232,7 +265,7 @@
         RenderPost.applyCodeScrollOverflow(this.app.preview, { codeScroll: this.app.settings && this.app.settings.codeScroll });
 
         // 等待浏览器完成布局后再测量元素位置
-        await new Promise(r => requestAnimationFrame(r));
+        await nextFrame();
         if (gen !== this.app._renderGeneration) { this.app._resumeScroll(); return; }
 
         // 滑动窗口模式：构建「源码行 → 预览像素」映射，并把预览滚动定位到焦点行；
@@ -244,7 +277,7 @@
           // 仅大纲跳转 / 打开文件等显式跳转才贴顶定位
           if (!this.app._previewScrollDriven) this._focusPreviewToLine(this.app._previewFocusLine);
           this.app._previewScrollDriven = false;
-          requestAnimationFrame(() => {
+          onFrameOrTimeout(() => {
             if (gen === this.app._renderGeneration) this.app._resumeScroll();
           });
           return;
@@ -286,7 +319,7 @@
           const maxScroll = Math.max(this.app.preview.scrollHeight - this.app.preview.clientHeight, 0);
           if (this.app.preview.scrollTop > maxScroll) this.app.preview.scrollTop = maxScroll;
         }
-        requestAnimationFrame(() => {
+        onFrameOrTimeout(() => {
           if (gen === this.app._renderGeneration) this.app._resumeScroll();
         });
       } catch (error) {
@@ -390,6 +423,7 @@
     window.PreviewController = PreviewController;
   }
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { PreviewController };
+    // nextFrame / onFrameOrTimeout 一并导出，供回归测试直接验证「rAF 停摆时仍能落地」。
+    module.exports = { PreviewController, nextFrame, onFrameOrTimeout };
   }
 })();

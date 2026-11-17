@@ -82,7 +82,7 @@ test('protectUnpairedDollar：真不成对的孤 $ 应被忽略', async () => {
 
 test('缩写 abbr 被替换且跳过 code/pre', async () => {
   const { preview } = createPreviewDom();
-  preview.innerHTML = '<div id="abbr-data" data-abbrs=\'[[ "Tizu", "TizuMark 编辑器" ]]\'></div><p>用 Tizu 写文档，<code>Tizu</code> 不替换</p>';
+  preview.innerHTML = '<div id="abbr-data" data-abbrs=\'[[ "Tizu", "TuziMark 编辑器" ]]\'></div><p>用 Tizu 写文档，<code>Tizu</code> 不替换</p>';
   PP.processAbbreviations(preview, opts);
   const p = preview.querySelector('p');
   assert.ok(p.querySelector('abbr'), '段落内应生成 abbr');

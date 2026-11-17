@@ -1,4 +1,4 @@
-﻿# TizuMark User Guide
+# TuziMark User Guide
 
 > A fast, elegant Markdown editor — from basics to mastery
 
@@ -10,12 +10,12 @@
 
 ### Interface Overview
 
-TizuMark's interface has four main areas:
+TuziMark's interface has four main areas:
 
 | Area | Position | Purpose |
 |------|----------|---------|
 | **Top Toolbar** | Top | File operations, quick insert, view modes, theme, help |
-| **Sidebars** | Folders left / Outline right | Outline navigation & file tree (when a folder is open); each side collapses independently |
+| **Sidebar** | Left | Outline navigation & file tree (tabbed panels) |
 | **Editor** | Center | CodeMirror with Markdown syntax highlighting and auto-closing brackets / quotes |
 | **Preview** | Right | Live-rendered Markdown with scroll sync |
 
@@ -29,7 +29,7 @@ TizuMark's interface has four main areas:
 | Save File | `File → Save` | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 | Save As | `File → Save As` | — |
 | Recent Files | `File → Recent Files` | — |
-| CLI Open | `tizumark.exe document.md` | — |
+| CLI Open | `tuzimark.exe document.md` | — |
 | Close Tab | Click × on tab or right-click | <kbd>Ctrl</kbd> + <kbd>W</kbd> |
 
 > **Drag and drop** `.md` files directly into the window — supports multiple files. `File → Recent Files` quickly reopens previously edited documents.
@@ -46,28 +46,27 @@ The three tabs in the center toolbar toggle between three view modes:
 - **Source** — Write on the left, see rendered output on the right
 - **Live Preview** — Like Typora: text keeps its formatted look while the block under the cursor shows Markdown source
 
-In Source Mode:
+In Source Mode, the middle divider hosts three control buttons: **Collapse Editor**, **Toggle Horizontal/Vertical Split**, and **Collapse Preview**. Drag the divider to resize (ratios for each orientation are remembered separately). **Double-click the divider** also flips the split direction. After collapsing one side, the restore button becomes an edge-docked semicircle handle (accent-colored); click it to expand again.
 
 | Action | Method |
 |--------|--------|
-| Collapse editor | Click left <kbd>◄</kbd> button |
-| Collapse preview | Click right <kbd>►</kbd> button |
+| Collapse editor / preview | Click the fold buttons on the divider (click the edge-docked handle to restore) |
+| Flip split direction | Click the orientation button in the divider center, or double-click the divider |
 | Resize panes | Drag the middle divider |
 
-### Sidebars: Folders (left) & Outline (right)
+### Sidebar: Folders & Outline
 
-The sidebar is split into **two independent panels**: **Folders** on the far left of the window, **Outline** on the far right. Each has a slim floating handle sitting on its own divider:
+The sidebar sits on the left side of the window, with **two tabs — Outline and Folders** — at its top. Only one panel is shown at a time; click a tab to switch:
 
-- Click the left handle to collapse / expand **Folders**; click the right handle to collapse / expand **Outline** — they are independent.
-- When collapsed the panel is fully hidden and only a 16px handle stays on the window edge (highlighted), click it to expand.
-- **Defaults: Outline expanded, Folders collapsed.**
-- Each panel's open/closed state and width are remembered, so **reopening the window restores exactly what you had**.
-- Drag the inner divider of either panel to resize it (80–500px).
-- Opening a workspace folder expands the left Folders panel; opening a Markdown document expands the right Outline panel.
+- Click the **floating handle on the sidebar's left edge** (or the "Toggle Sidebar" shortcut) to collapse / expand the whole sidebar. When collapsed only a 16px handle remains on the window edge (highlighted) — click it to bring the sidebar back.
+- **The selected tab is remembered**: reopening the window restores the tab you were last on. Opening a Markdown document switches to Outline automatically, but never overwrites your manual choice.
+- Drag the divider on the sidebar's right edge to resize it (80–500px); the width is remembered too.
+- Opening a workspace folder switches to the Folders tab.
+- Opening any file auto-reveals it in the tree; if no workspace is open yet, that file's folder becomes the tree root and all its files are listed (the tree only — your current tab is not switched).
 
 **Outline**: Automatically shows the document heading structure (H1–H6), indented by level. **Click any heading** — the preview jumps and centers on it. The outline updates in real time as you edit.
 
-**Files**: After opening a directory with `File → Open Folder`, this panel shows a tree view of files in that directory. Click a file to open it in a tab. The tree watches the folder for external additions/removals and refreshes automatically.
+**Files**: After opening a directory with `File → Open Folder`, this panel shows a tree view of files in that directory. Click a file to open it in a tab. The tree watches the folder for external additions/removals and refreshes automatically. Clicking the **"Files" title itself** opens a folder picker to switch workspace; clicking the **path** under the title opens the current folder in the system file manager; a **"Up One Level"** button on the title bar jumps to the parent directory.
 
 ### Multi-Tab Editing
 
@@ -77,12 +76,12 @@ The sidebar is split into **two independent panels**: **Folders** on the far lef
 | Switch Tab | <kbd>Ctrl</kbd> + <kbd>Tab</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> |
 | Drag to Reorder | Drag a tab to rearrange its position |
 | Close Tab | Click × or <kbd>Ctrl</kbd> + <kbd>W</kbd> |
-| Right-Click Menu | Close / Close Others / Close All / Copy Path |
+| Right-Click Menu | Close / Close Others / Close All / **Rename** / Copy Path / Open Containing Folder (renaming a saved file also renames it on disk) |
 | Double-Click | On empty tab bar space to create new tab |
 
 Unsaved tabs show a `*` indicator.
 
-**Session Restore**: When you reopen TizuMark after closing it, your previous tabs, folder workspace, and expanded directories are automatically restored — picking up exactly where you left off.
+**Session Restore**: When you reopen TuziMark after closing it, your previous tabs, folder workspace, and expanded directories are automatically restored — picking up exactly where you left off.
 
 ### Find & Replace
 
@@ -108,11 +107,11 @@ Three right-click menus for efficient workflow:
 
 - **Editor**: Cut / Copy / Paste / Structure Insert / Text Format / Lists / Links & Media / Find & Replace / Select All
 - **Preview**: Copy / Select All / Copy as HTML / Find in Preview
-- **Tab**: Close / Close Others / Close All / Copy File Path
+- **Tab**: Close / Close Others / Close All / **Rename** / Copy File Path / Open Containing Folder
 
 ### External File Change Prompt
 
-When an open file is modified by another program outside TizuMark, a banner appears at the top offering **Reload** / **Ignore** / **Reload All** / **Ignore All**, so you never accidentally overwrite your changes.
+When an open file is modified by another program outside TuziMark, a banner appears at the top offering **Reload** / **Ignore** / **Reload All** / **Ignore All**, so you never accidentally overwrite your changes.
 
 ### Large Document Protection
 
@@ -273,7 +272,7 @@ Recently added syntax features: LaTeX delimiters `\(...\)` (inline) and `\[…\]
 
 ## Image Management
 
-TizuMark offers comprehensive image support with multiple insertion methods and auto-dedup.
+TuziMark offers comprehensive image support with multiple insertion methods and auto-dedup.
 
 ### Insert an Image
 
@@ -297,7 +296,7 @@ Only paths ending with an image extension are treated as images; non-image uses 
 
 ### Auto Deduplication
 
-Images with identical content are stored only once. TizuMark uses **MD5 hash** for content comparison:
+Images with identical content are stored only once. TuziMark uses **MD5 hash** for content comparison:
 
 - On paste or insert, the file's MD5 is computed automatically
 - If the image already exists, the existing file is reused
@@ -334,13 +333,13 @@ You can edit or remove `width`/`height` directly in the source:
 
 ### Image Viewer
 
-Click any image in the preview to open a dedicated viewer: **drag** to pan, **scroll to zoom anchored at the cursor** (move the pointer over the detail you want, then scroll), and **double-click** to reset to fit. No need to leave TizuMark to inspect an image closely.
+Click any image in the preview to open a dedicated viewer: **drag** to pan, **scroll to zoom anchored at the cursor** (move the pointer over the detail you want, then scroll), and **double-click** to reset to fit. No need to leave TuziMark to inspect an image closely.
 
 ---
 
 ## Auto Updates
 
-TizuMark silently checks for updates on startup:
+TuziMark silently checks for updates on startup:
 
 | Scenario | Behavior |
 |----------|----------|
@@ -379,10 +378,10 @@ Update dialog:
 
 ### Export PDF
 
-`File → Export PDF` (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>) uses the system print dialog:
+`File → Export PDF` (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>):
 
-- After a confirmation prompt, the browser's native print function is used
-- In the print dialog you can choose "Save as PDF" and adjust page orientation/margins
+- After a soft confirmation prompt, the PDF is **exported directly** and a success toast appears — no print dialog needed
+- Only when the WebView2 runtime is too old to support direct export does it fall back to the system print dialog (where you can choose "Save as PDF" and adjust page orientation/margins)
 - Math formulas and Mermaid charts are re-rendered for crisp output
 
 ### Export DOCX
@@ -488,7 +487,7 @@ Ensure image accessibility. Use relative paths for local files, check network fo
 
 ### How to manage a whole folder of files?
 
-`File → Open Folder` opens a directory; the left "Folders" panel shows a tree view. Click to open files, and it auto-refreshes on external changes.
+`File → Open Folder` opens a directory; the "Folders" tab shows a tree view. Click to open files, and it auto-refreshes on external changes.
 
 ### How to contact us?
 
@@ -498,5 +497,5 @@ Ensure image accessibility. Use relative paths for local files, check network fo
 ---
 
 <p align="center">
-  <b>TizuMark — Write at the speed of thought</b>
+  <b>TuziMark — Write at the speed of thought</b>
 </p>

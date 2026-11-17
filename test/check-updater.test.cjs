@@ -24,7 +24,7 @@ test('parseMinisignPub 兼容「原始公钥 base64」（健壮，不误报）',
 });
 
 test('parseMinisignSig 解析 .sig 结构正确且 keyId 与配置公钥一致', () => {
-  const sigPath = path.join(ROOT, 'release', 'TizuMark_1.2.0_x64-setup.exe.sig');
+  const sigPath = path.join(ROOT, 'release', 'TuziMark_1.2.0_x64-setup.exe.sig');
   if (!fs.existsSync(sigPath)) return; // 无 release 产物时跳过（CI 等）
   const pub = parseMinisignPub(tauriConf.plugins.updater.pubkey);
   const sig = parseMinisignSig(sigPath);

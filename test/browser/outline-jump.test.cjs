@@ -35,7 +35,7 @@ const puppeteer = require('puppeteer-core');
 // 足够长的多级标题文档，让标题能分布到不同滚动位置
 function buildDemo() {
   const lines = [];
-  lines.push('# TizuMark 大纲跳转回归测试');
+  lines.push('# TuziMark 大纲跳转回归测试');
   lines.push('');
   lines.push('这是文档简介，用于占位并制造顶部空白。');
   lines.push('');

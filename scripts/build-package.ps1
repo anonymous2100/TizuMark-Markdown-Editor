@@ -1,5 +1,5 @@
 ﻿# ============================================================
-# TizuMark 一键打包脚本（Windows）
+# TuziMark 一键打包脚本（Windows）
 #
 # 用法：
 #   1) 双击 scripts\build-package.bat（推荐，自动保持窗口打开）
@@ -42,7 +42,7 @@ foreach ($tool in @('node', 'npm', 'cargo')) {
     else { Fail "未找到 $tool（请先安装 Node.js LTS 与 Rust 工具链，见 docs/DEV_SETUP.md）"; $allOk = $false }
 }
 $version = (Get-Content (Join-Path $root 'package.json') -Raw | ConvertFrom-Json).version
-Info "TizuMark v$version"
+Info "TuziMark v$version"
 if (-not $allOk) { Exit-WithPause 1 }
 
 # ---- 1/3 构建渲染层 ----
@@ -61,11 +61,11 @@ if (-not (Test-Path $tauriCli)) { $tauriCli = 'tauri' }
 & $tauriCli build
 if ($LASTEXITCODE -ne 0) { Fail "tauri build 失败（若是 link.exe 找不到，请先跑 scripts\fix-moved-toolchain.ps1）"; Exit-WithPause 1 }
 
-# postbuild 钩子（package.json）会自动把 tizumark.exe 复制为 TizuMark_<version>_x64.exe
+# postbuild 钩子（package.json）会自动把 tuzimark.exe 复制为 TuziMark_<version>_x64.exe
 # 但 npx 直接调用 tauri 不触发 npm postbuild，这里显式补一次
 $releaseDir = Join-Path $root "src-tauri\target\release"
-$exe = Join-Path $releaseDir "tizumark.exe"
-$versioned = Join-Path $releaseDir "TizuMark_$($version)_x64.exe"
+$exe = Join-Path $releaseDir "tuzimark.exe"
+$versioned = Join-Path $releaseDir "TuziMark_$($version)_x64.exe"
 if ((Test-Path $exe) -and -not (Test-Path $versioned)) {
     Copy-Item $exe $versioned -Force
 }

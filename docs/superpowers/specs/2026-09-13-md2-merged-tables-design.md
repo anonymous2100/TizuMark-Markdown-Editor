@@ -4,7 +4,7 @@
 - 状态：已实现（2026-09-13；实现期对第 5 节深度上限、门禁诚实边界与测试计划表做过同步修正）
 - 作者：Yoong Hor Meng
 - 许可：MIT（移植/衍生自 md2，Copyright (c) 2026 The md2 authors；见 `src/md2/LICENSE`）
-- 目标：让 TizuMark 支持带合并单元格（colspan/rowspan）的表格——**本子项目只做「解析 + 预览渲染」**，导出与编辑器支持见「后续子项目」。
+- 目标：让 TuziMark 支持带合并单元格（colspan/rowspan）的表格——**本子项目只做「解析 + 预览渲染」**，导出与编辑器支持见「后续子项目」。
 
 ## 背景
 
@@ -27,7 +27,7 @@
 - `crates/md2-core/src/html.rs`——渲染真实 `colspan`/`rowspan`
 - `test_data/golden/`——19 有效 + 19 无效文档，含手写 `.ast.json` 与 `.html` 快照
 
-**关键结构对应**：md2 的 `split_top_level_paragraph` 与 TizuMark 的 `convertContainerTables` 是同一形态——都是「在主解析器之前逐行认领表格语法」。这使方案 A（移植）的落点非常自然。
+**关键结构对应**：md2 的 `split_top_level_paragraph` 与 TuziMark 的 `convertContainerTables` 是同一形态——都是「在主解析器之前逐行认领表格语法」。这使方案 A（移植）的落点非常自然。
 
 ## 需求（已澄清）
 
@@ -115,7 +115,7 @@ md2 要求单元格可含完整 CommonMark 块（列表、围栏代码、块引�
 **方案**：单元格内容**递归回灌同一个 unified processor**，从而获得真实 CommonMark 渲染。要点：
 
 - 以重入守卫（`_renderingMd2Cell`）杜绝递归：md2 禁止单元格内嵌表格（§1.4），嵌套深度恒为 1，无需层数上限；异常路径回退为 HTML 转义
-- 单元格内标题降级处理（md2 未定义单元格内标题的层级语义，按 TizuMark 现有内联规则处理）
+- 单元格内标题降级处理（md2 未定义单元格内标题的层级语义，按 TuziMark 现有内联规则处理）
 - **数学、Mermaid、脚注、高亮等无需额外处理**——`PreviewPost.*` 在 `innerHTML` 注入后对整个 `#preview` DOM 统一后处理（`src/controllers/preview-controller.js:186-215`），单元格内的内容自动享受同等处理
 
 这是本子项目**技术风险最高**的一处（递归重入 + 与现有后处理的交互），需重点测试。
@@ -137,7 +137,7 @@ md2 要求单元格可含完整 CommonMark 块（列表、围栏代码、块引�
 - **covered cell 完全不产出元素**（`html.rs:185-187`）——该行 `td` 数少于列数，这是合并的正确表达
 - `headerRowCount > 0` → `<thead>` 内全部为 `<th>`；其余进 `<tbody>` 用 `<td>`（`html.rs:162-180`）
 
-**对齐编码差异（有意保留）**：md2 用内联 `style="text-align: left"`；TizuMark 既有约定与 CSS 选择器（`src/styles.css:2138`）用 `align="left"` 属性。本方案**采用 TizuMark 的 `align` 属性**，以保持与现有表格 CSS 一致；差异由一致性门禁的归一化吸收（见下节）。
+**对齐编码差异（有意保留）**：md2 用内联 `style="text-align: left"`；TuziMark 既有约定与 CSS 选择器（`src/styles.css:2138`）用 `align="left"` 属性。本方案**采用 TuziMark 的 `align` 属性**，以保持与现有表格 CSS 一致；差异由一致性门禁的归一化吸收（见下节）。
 
 ## 一致性门禁
 
@@ -152,7 +152,7 @@ md2 的 `test_data/golden/` 作为一致性套件。因对齐编码差异，比�
 5. 单元格文本（拼接后比较，空白折叠）
 6. 对齐：`style="text-align:X"` 与 `align="X"` 归一为同一个 `X`
 
-**门禁的诚实边界：** 本门禁比较表格骨架、合并结构、单元格文本与对齐，**不比较单元格内部的标记细节**。md2 把单段落单元格输出为裸行内内容，TizuMark 回灌 unified 会产生 `<p>` 包裹——文本与结构一致，标记不同，此为有意接受的差异。
+**门禁的诚实边界：** 本门禁比较表格骨架、合并结构、单元格文本与对齐，**不比较单元格内部的标记细节**。md2 把单段落单元格输出为裸行内内容，TuziMark 回灌 unified 会产生 `<p>` 包裹——文本与结构一致，标记不同，此为有意接受的差异。
 
 **门禁范围**：网格夹具（`06_grid_colspan`、`07_grid_rowspan`、`08_grid_rowcol_span`、`12_grid_two_headers_colspan`、`13_grid_two_headers_rowspan`、`grid_alignment`，以及 `04_grid_multiline_cells`）**作为硬门禁**；管道夹具（`09`、`10`）按「管道宽松」原则作为参考/回归，不作为硬门禁。
 
@@ -199,7 +199,7 @@ md2 的 `test_data/golden/` 作为一致性套件。因对齐编码差异，比�
 
 - md2 仓库：`C:\s\md2`（MIT，v0.1，`spec/md2-spec.md`）
 - md2 规范：`spec/md2-spec.md`（网格 §3、管道 §4、错误 §7）
-- TizuMark 渲染器：`src/unified-renderer.js`
+- TuziMark 渲染器：`src/unified-renderer.js`
 - 集成调用点：`src/unified-renderer.js:1482-1483`
 - 现有前置扫描先例：`src/unified-renderer.js:591-670`
 - 表格 CSS：`src/styles.css:2107-2139`

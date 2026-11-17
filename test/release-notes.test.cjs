@@ -34,9 +34,9 @@ test('VERSION 与 package.json 一致', () => {
 test('【格式红线】下载块：## 下载 + 三行链接（中文段）', () => {
   assert.ok(BODY.includes('## ⬇️ 下载'), '缺少下载标题');
   const zhPart = BODY.split('\n---\n')[0];
-  const links = zhPart.match(/\[⬇ TizuMark_/g) || [];
+  const links = zhPart.match(/\[⬇ TuziMark_/g) || [];
   assert.strictEqual(links.length, 3, '中文下载块应有 3 个下载链接');
-  for (const name of [`TizuMark_${VERSION}_x64-setup.exe`, `TizuMark_${VERSION}_x64_en-US.msi`, `TizuMark_${VERSION}_x64.exe`]) {
+  for (const name of [`TuziMark_${VERSION}_x64-setup.exe`, `TuziMark_${VERSION}_x64_en-US.msi`, `TuziMark_${VERSION}_x64.exe`]) {
     assert.ok(BODY.includes(name), `下载块应包含 ${name}`);
     assert.ok(BODY.includes(`/v${VERSION}/`), `下载 URL 应使用 /v${VERSION}/`);
   }
@@ -50,7 +50,7 @@ test('【格式红线】安装包说明表格：标题 + 3 行表格 + 表头', 
   assert.ok(BODY.includes('NSIS 安装包 (.exe)'), '表格应有 NSIS 行');
   assert.ok(BODY.includes('MSI 安装包 (.msi)'), '表格应有 MSI 行');
   assert.ok(BODY.includes('绿色版 (.exe)'), '表格应有绿色版行');
-  assert.ok(BODY.includes('msiexec /i TizuMark_' + VERSION + '_x64_en-US.msi /qn'), 'MSI 行应含静默安装命令');
+  assert.ok(BODY.includes('msiexec /i TuziMark_' + VERSION + '_x64_en-US.msi /qn'), 'MSI 行应含静默安装命令');
 });
 
 test('【格式红线】更新内容标题 + 三分类小节，顺序为 新增→改进→修复', () => {
@@ -121,7 +121,7 @@ test('categorize 归类正确', () => {
   assert.strictEqual(categorize('feat: 新增导出'), 'new');
   assert.strictEqual(categorize('fix: 修复崩溃'), 'fix');
   assert.strictEqual(categorize('refactor: 统一下拉框'), 'improve');
-  assert.strictEqual(categorize('代码描述：【TizuMark】修复文件树复制粘贴 - 布局'), 'fix');
+  assert.strictEqual(categorize('代码描述：【TuziMark】修复文件树复制粘贴 - 布局'), 'fix');
 });
 
 test('isInternalReleaseCommit 识别内部发布提交', () => {
@@ -134,7 +134,7 @@ test('isInternalReleaseCommit 识别内部发布提交', () => {
 test('summarize 去 Conventional Commits 前缀与代码描述元信息', () => {
   assert.strictEqual(summarize('feat: 真实 DOCX 导出'), '真实 DOCX 导出');
   assert.strictEqual(summarize('fix(侧边栏): 大纲美化'), '大纲美化');
-  const out = summarize('代码描述：【TizuMark】修复文件树复制粘贴 - 大文件提示条合并 - 同步测试 需求名称：xxx');
+  const out = summarize('代码描述：【TuziMark】修复文件树复制粘贴 - 大文件提示条合并 - 同步测试 需求名称：xxx');
   assert.ok(out.startsWith('修复文件树复制粘贴'), '应取主句: ' + out);
   assert.ok(!out.includes('需求名称'), '应去掉需求名称');
 });

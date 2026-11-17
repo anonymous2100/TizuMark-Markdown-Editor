@@ -19,9 +19,9 @@ if (!TOKEN) { console.error('GITHUB_TOKEN 未设置'); process.exit(1); }
 
 const RELEASE_DIR = path.join(__dirname, '..', 'release');
 const ASSETS = [
-  `TizuMark_${VERSION}_x64-setup.exe`,
-  `TizuMark_${VERSION}_x64_en-US.msi`,
-  `TizuMark_${VERSION}_x64.exe`,
+  `TuziMark_${VERSION}_x64-setup.exe`,
+  `TuziMark_${VERSION}_x64_en-US.msi`,
+  `TuziMark_${VERSION}_x64.exe`,
   'update-windows-x86_64.json',
 ];
 

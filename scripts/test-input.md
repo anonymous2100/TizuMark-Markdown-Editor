@@ -1,7 +1,7 @@
-# TizuMark 全功能测试用例
+# TuziMark 全功能测试用例
 
 > 覆盖 PR #6(换行+重载+滚动)、#10(脚注)、#14(窗口状态)、#15(CVE)、#16(XSS) 所有功能。
-> 粘贴到 TizuMark 中预览，对照检查每项是否通过。
+> 粘贴到 TuziMark 中预览，对照检查每项是否通过。
 
 ---
 
@@ -81,9 +81,9 @@
 
 脚注内含链接[^withlink]。
 
-[^withlink]: 参见 [TizuMark 项目](https://github.com/tizuio/TizuMark-Markdown-Editor) 了解更多。
+[^withlink]: 参见 [TuziMark 项目](https://github.com/tizuio/TizuMark-Markdown-Editor) 了解更多。
 
-**检查：** 脚注区中"TizuMark 项目"是可点击的链接。
+**检查：** 脚注区中"TuziMark 项目"是可点击的链接。
 
 ---
 
@@ -244,7 +244,7 @@
 
 | 名称 | 版本 | 状态 |
 |------|------|------|
-| TizuMark | 1.0.6 | ✓ |
+| TuziMark | 1.0.6 | ✓ |
 | linkify-it | 5.0.2 | ✓ |
 | rehype-sanitize | 6.0.0 | ✓ |
 

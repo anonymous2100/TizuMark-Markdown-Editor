@@ -1,6 +1,6 @@
-# TizuMark 架构文档
+# TuziMark 架构文档
 
-> 本文记录 TizuMark 桌面 Markdown 编辑器的模块边界、架构决策（ADR-1~ADR-8）、
+> 本文记录 TuziMark 桌面 Markdown 编辑器的模块边界、架构决策（ADR-1~ADR-8）、
 > IPC 收敛契约、构建链路与耦合护栏。它是「优化方案」（`docs/architecture-optimization-plan.md`）
 > 执行后的权威落地说明，与代码现状保持一致。
 >

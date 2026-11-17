@@ -1,4 +1,4 @@
-# TizuMark Windows Code Signing Script
+﻿# TuziMark Windows Code Signing Script
 # 用法: .\scripts\sign.ps1 <要签名的文件路径>
 # Tauri 构建时会自动调用此脚本，传入二进制文件路径
 #
@@ -8,7 +8,7 @@
 #   3. Windows SDK (signtool.exe) 已安装
 #
 # 环境变量配置（可选，用于自动获取证书信息）：
-#   CODE_SIGN_CERT_SUBJECT - 证书主题名称（如 "Open Source Developer, TizuMark"）
+#   CODE_SIGN_CERT_SUBJECT - 证书主题名称（如 "Open Source Developer, TuziMark"）
 #   CODE_SIGN_TIMESTAMP_URL - 时间戳服务器 URL（默认使用 Sectigo）
 
 param(
@@ -41,7 +41,7 @@ if (-not (Test-Path $FilePath)) {
     exit 1
 }
 
-Write-Host "=== TizuMark Code Signing ===" -ForegroundColor Cyan
+Write-Host "=== TuziMark Code Signing ===" -ForegroundColor Cyan
 Write-Host "目标文件: $FilePath" -ForegroundColor White
 
 # ---- 执行签名 ----

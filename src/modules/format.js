@@ -151,6 +151,19 @@
         // 无选区：原单行行为（含上一行非空时自动换行再加前缀）
         const cursor = cm.getCursor();
         const line = cm.getLine(cursor.line);
+        // 2026-10-25 用户反馈（嵌套引用块）：光标行已是引用行（含回车产生的 `> ` 续行）时，
+        // 「插入引用」= 在当前引用块内原位嵌套——行首加一级 `> `（与选区分支「linePrefix + text」
+        // 同一语义：> a → > > a），不走「上一行非空 → 插无前缀空行」路径——那条路径会把引用块
+        // 拆成两块（空行分隔），新块成为外层+1 级的独立嵌套盒（用户截图：引用内 / 插入引用块
+        // 出一排独立盒，末次插入成空盒）。引用行口径收口 constants.js 共享常量（与 wysiwyg.js
+        // RE.quote 同源）；此处用 window.TMConst 因本方法体被 list-insert.test.cjs 抽取 eval
+        // 执行（stub 上下文裸标识符无 TMConst）。
+        if (prefix === '> ' && window.TMConst.BLOCKQUOTE_LINE_RE.test(line)) {
+          cm.replaceRange(prefix, { line: cursor.line, ch: 0 }, { line: cursor.line, ch: 0 });
+          cm.setCursor({ line: cursor.line, ch: cursor.ch + prefix.length });
+          cm.focus();
+          return;
+        }
         const prevLine = cursor.line > 0 ? cm.getLine(cursor.line - 1) : '';
         const needNewline = cursor.line > 0 && prevLine.trim() !== '';
         const newLine = needNewline ? '\n' : '';
@@ -299,6 +312,13 @@
         // 光标在空行）。人为连按两次 Enter 间隔 ≥80ms，且此处还要求「组合 10s 内刚结束」
         // 双条件，避免误吞无 IME 上下文的快速输入。
         if (sincePrevEnter < 150 && this._lastCompositionEnd && now - this._lastCompositionEnd < 10000) return;
+        // 所见即所得 HTML 容器块（折叠区块等）：光标在块末结构行（</details> 闭标签行）
+        // 按 Enter → 新行插在结构行前（块内灰盒内），不出块、不跳出编辑态（2026-10-22
+        // 用户反馈「从末尾点击回车会跳出折叠列表编辑态，在折叠列表下方新增一行」）。
+        // 围栏块（代码 / 图表）闭围栏行不拦截（2026-10-25 用户要求：``` 是普通可编辑内容，
+        // 行尾回车新行落 ``` 下方、退出代码块，同 Typora 口径）。源码模式不受影响。
+        if (this.viewMode === 'wysiwyg' && this._wysiwygEnterOnBlockCloseLine &&
+            this._wysiwygEnterOnBlockCloseLine(cm)) return;
         const TABLE_ROW_RE = /^\|.*\|\s*$/;
         const TABLE_SEPARATOR_RE = /^\|\s*[-:][-:\s]*\|/;
         const pos = cm.getCursor();

@@ -15,6 +15,8 @@ const {
   EXPORT_CJK_FONT_TAIL,
   EXPORT_FALLBACK_SANS,
   FONT_LOCALE_REV,
+  DOC_REQUIRED_BUTTON_IDS,
+  DOC_FREE_MENU_ACTIONS,
   Tab,
   dialogOpen,
   dialogSave,
@@ -186,6 +188,11 @@ class MarkdownEditor {
   get activeTab() {
     return this.tabs[this.activeTabIndex];
   }
+  // 允许 0 标签：无文档时 activeTab 为 undefined，所有「必须有当前文档」的动作
+  // 在 3 个集中派发点（_bindMenuAction / executeMenuAction / 快捷键注册）统一短路。
+  hasDoc() {
+    return this.tabs.length > 0 && !!this.activeTab;
+  }
   // 事件绑定只做「DOM 事件 → 功能方法」的路由，具体交互实现分散在 modules/ 各功能模块。
   // 新增事件请就近放进对应模块，不要往这里堆。
   initEventListeners() {
@@ -195,6 +202,7 @@ class MarkdownEditor {
     this.initOutlineFilter();       // layout
     this.initRecentMenus();         // tabs
     this.initFolderSortControls();  // files
+    this.initFileTreeDragEvents();  // files：文件树拖放移动（指针事件，规避 Tauri 原生 DnD 接管）
     this.initViewControls();        // layout
     this.initDialogDismiss();       // misc-ui
     this.initWindowControls();      // updater
@@ -212,6 +220,8 @@ class MarkdownEditor {
         const m = document.getElementById(closeMenu);
         if (m) m.classList.add('hidden');
       }
+      // 无文档时静默拦掉必须依赖当前文档的按钮（置灰由 _applyEmptyState 负责）
+      if (DOC_REQUIRED_BUTTON_IDS.includes(id) && !this.hasDoc()) return;
       fn();
     });
   }
@@ -227,8 +237,8 @@ class MarkdownEditor {
     this._bindMenuAction('btn-save', () => this.saveFile(), F);
     this._bindMenuAction('btn-save-as', () => this.saveAsFile(), F);
     this._bindMenuAction('btn-reload', () => this.reloadFile());
-    // 左右侧栏吸附把手（#folder-float-btn / #sidebar-float-btn）的点击绑定在市局 modules/layout.js
-    // 的 initSidebarTabs()，这里不再重复绑定（重复会导致一次点击开关两次、看起来「点了没反应」）。
+    // 侧栏吸附把手（#sidebar-float-btn）的点击绑定在 modules/layout.js 的 initSidebarTabs()，
+    // 这里不再重复绑定（重复会导致一次点击开关两次、看起来「点了没反应」）。
     this._bindMenuAction('btn-reload-menu', () => this.reloadFile(), F);
     this._bindMenuAction('btn-export-html', () => this.exportHTML(), F);
     this._bindMenuAction('btn-export-img', () => this.exportImage(), F);
@@ -255,9 +265,22 @@ class MarkdownEditor {
   }
 
   initAppLifecycleEvents() {
+    // 合盖睡眠唤醒后的状态复位（详见 modules/lifecycle.js 的 initWakeRecovery）
+    this.initWakeRecovery();
+
+    // 唤醒 / 外接屏重连时 WebView2 会连发 resize；这里原来是每事件同步跑布局逻辑，
+    // 与 CM5 自身的 resize→setSize() 清缓存全量重测叠加会形成布局抖动。防抖合并成一次。
+    let resizeTimer = null;
     window.addEventListener('resize', () => {
-      this.updateMaximizeIcon();
-      this.updateSideButtons();
+      if (resizeTimer != null) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        resizeTimer = null;
+        this.updateMaximizeIcon();
+        this.updateSideButtons();
+        // 仅纵向分屏需要重算（像素高度依赖窗口高度）；横向用 flex 比例自动跟随窗口缩放，
+        // 重算反而会在窗口变小时把预览固定成大 px 宽、编辑器(basis 0)挤成 0 宽 → 分栏消失
+        if (this.settings.splitOrientation === 'vertical') this.applyPreviewPaneWidth();
+      }, 80);
     });
 
     // 应用退出时全量 revoke Blob URL，避免 WebView 存活期内泄漏（LRU 兜底外的一刀切）
@@ -293,6 +316,8 @@ class MarkdownEditor {
     this._dispatchGlobalShortcut(e);
   }
   executeMenuAction(action) {
+    // 无文档时只放行文件树 / 文件夹类右键动作（它们不依赖 activeTab，且是空态恢复入口）
+    if (!this.hasDoc() && !DOC_FREE_MENU_ACTIONS.includes(action)) return;
     switch (action) {
       case 'cut': { const s = this.cm.getSelection(); if (s) { navigator.clipboard.writeText(s); this.cm.replaceSelection(''); } this.cm.focus(); break; }
       case 'copy': { const s = this.cm.getSelection(); if (s) navigator.clipboard.writeText(s); this.cm.focus(); break; }
@@ -307,6 +332,20 @@ class MarkdownEditor {
       case 'insert-highlight': this.wrapSelection('==', '=='); break;
       case 'insert-superscript': this.wrapSelection('<sup>', '</sup>'); break;
       case 'insert-subscript': this.wrapSelection('<sub>', '</sub>'); break;
+      // 内容类型补齐（2026-10-22 全量比对新增，面板默认不启用）：光标偏移=插入文本内
+      // 待填位置（insertBlock 口径），wrapSelection 空选区时插入空壳、光标落壳内。
+      case 'insert-dl': this.insertBlock('术语\n: 释义', 2); break;
+      case 'insert-details': this.insertBlock('<details>\n<summary>点击展开</summary>\n\n内容\n\n</details>', 35); break;
+      case 'insert-footnote': this.insertBlock('[^1]: 脚注内容', 6); break;
+      case 'insert-progress': this.insertBlock('<progress value="70" max="100"></progress>', 17); break;
+      case 'insert-center': this.insertBlock('<center>\n居中显示的文本\n</center>', 9); break;
+      case 'insert-u': this.wrapSelection('<u>', '</u>'); break;
+      case 'insert-ins': this.wrapSelection('<ins>', '</ins>'); break;
+      case 'insert-del': this.wrapSelection('<del>', '</del>'); break;
+      case 'insert-figure': this.insertBlock('<figure>\n  <img src="图片地址" alt="图片描述">\n  <figcaption>图注文字</figcaption>\n</figure>', 21); break;
+      case 'insert-kbd': this.wrapSelection('<kbd>', '</kbd>'); break;
+      case 'insert-abbreviation': this.wrapSelection('<abbr title="完整词">', '</abbr>'); break;
+      case 'insert-ruby': this.insertBlock('<ruby>文字<rt>拼音</rt></ruby>', 6); break;
 
       case 'insert-h1': this.applyHeadingLevel(1); break;
       case 'insert-h2': this.applyHeadingLevel(2); break;
@@ -346,6 +385,7 @@ class MarkdownEditor {
       case 'tab-close-all': this.closeAllTabs(); break;
       case 'tab-copy-path': this.copyTabPath(this._contextTabIndex); break;
       case 'tab-open-containing': this.openTabContainingFolder(this._contextTabIndex); break;
+      case 'tab-rename': this.renameTabByIndex(this._contextTabIndex); break;
 
       case 'folder-open-containing': this.openContainingFolder(this._folderCtxPath, this._folderCtxIsDir); break;
       case 'folder-copy-path': this.copyPath(this._folderCtxPath); break;
@@ -450,8 +490,8 @@ function initEula() {
 window.addEventListener('DOMContentLoaded', async () => {
   // 防重入：DOMContentLoaded 只允许初始化一次（jsdom 测试环境会自然触发 + 手动派发各一次，
   // 双重初始化会重复注册 file-open/drag-drop 等监听，导致确认框弹两次等问题）
-  if (window.__tizumarkInited) return;
-  window.__tizumarkInited = true;
+  if (window.__tuzimarkInited) return;
+  window.__tuzimarkInited = true;
   // 安全兜底：20 秒后强制隐藏加载遮罩，防止任何异常导致卡死
   const loadingSafetyTimer = setTimeout(() => {
     const overlay = document.getElementById('loading-overlay');

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <title>TizuMark</title>
+  <title>TuziMark</title>
   <link rel="icon" type="image/png" href="app-icon.png">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="lib/codemirror/codemirror.css">
@@ -103,7 +103,7 @@
     <header class="header" data-tauri-drag-region>
       <div class="toolbar" data-tauri-drag-region>
         <div class="toolbar-left">
-          <img id="app-icon" class="app-icon" src="app-icon.png" alt="TizuMark" draggable="false">
+          <img id="app-icon" class="app-icon" src="app-icon.png" alt="TuziMark" draggable="false">
           <div class="dropdown">
             <button id="btn-file" class="toolbar-btn" title="文件">
               <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
@@ -382,10 +382,34 @@
     </div>
 
     <main class="editor-container">
-      <!-- 左右双栏布局：文件夹栏（窗口最左，默认折叠）→ 拖宽分隔器 → 编辑区 → 拖宽分隔器 → 大纲栏（窗口最右，默认展开）。
-           两侧各自独立开关、独立宽度；开合状态与宽度写入 settings（localStorage），关窗后下次启动原样恢复。 -->
-      <div id="folder-sidebar" class="outline-sidebar folder-sidebar hidden" aria-label="文件夹侧栏">
-        <div id="folder-panel" class="sidebar-tab-panel" data-panel="files" role="region" aria-label="文件夹">
+      <!-- 左侧侧栏：顶部标签栏在「大纲 / 文件夹」之间二选一（同一时刻只显示一个面板）。
+           标签选择写入 settings.sidebarTab，重启后按上次选择还原；宽度写入 outlineWidth。 -->
+      <div id="outline-sidebar" class="outline-sidebar" aria-label="侧边栏">
+        <div id="sidebar-tabs" class="sidebar-tabs" role="tablist" aria-label="侧边栏面板">
+          <button id="sidebar-tab-outline" class="sidebar-tab active" type="button" role="tab" data-tab="outline" aria-selected="true" aria-controls="outline-panel" title="大纲">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
+            <span class="sidebar-tab-label" data-i18n="outline">大纲</span>
+          </button>
+          <button id="sidebar-tab-files" class="sidebar-tab" type="button" role="tab" data-tab="files" aria-selected="false" aria-controls="folder-panel" title="文件夹">
+            <svg class="sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+            <span class="sidebar-tab-label" data-i18n="folder">文件夹</span>
+          </button>
+        </div>
+        <!-- 标签页 1：大纲 -->
+        <div id="outline-panel" class="sidebar-tab-panel" data-panel="outline" role="tabpanel" aria-labelledby="sidebar-tab-outline">
+          <div class="outline-panel-header panel-header">
+            <span class="header-actions">
+              <div id="outline-filter" class="outline-filter"></div>
+              <span class="header-divider" aria-hidden="true"></span>
+              <button id="btn-all-outline" class="panel-action-btn" type="button" title="展开/折叠全部大纲" aria-label="展开或折叠全部大纲">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg>
+              </button>
+            </span>
+          </div>
+          <div id="outline-content" class="outline-content sidebar-panel"></div>
+        </div>
+        <!-- 标签页 2：文件夹 -->
+        <div id="folder-panel" class="sidebar-tab-panel hidden" data-panel="files" role="tabpanel" aria-labelledby="sidebar-tab-files">
           <div id="folder-content" class="folder-content sidebar-panel">
             <div class="files-panel-header panel-header">
               <span class="panel-title-group" id="files-header-open" title="选择/切换工作区文件夹">
@@ -413,7 +437,7 @@
           </div>
         </div>
       </div>
-      <div class="outline-resizer folder-resizer hidden" id="folder-resizer"></div>
+      <div class="outline-resizer" id="outline-resizer"></div>
        <div class="editor-column">
       <div id="large-file-banner" class="large-file-banner hidden" role="alert" aria-live="polite">
        <span id="large-file-banner-text"></span>
@@ -445,7 +469,14 @@
             </div>
             <div id="editor-wrapper"></div>
           </div>
-          <div class="resizer" id="resizer"></div>
+          <div class="resizer" id="resizer" title="拖动调整分屏比例，双击切换左右/上下分屏">
+            <!-- 分屏中央控制钮：折叠编辑 / 切方向 / 折叠预览（横向分屏竖排、上下分屏横排；
+                 图标为 Lucide（lucide-static v0.469.0，ISC），折叠态由 _syncFoldButtons 换
+                 panel-*-open 并贴边停靠，见 styles.css .split-fold-btn 停靠段） -->
+            <button id="btn-fold-editor" class="split-fold-btn" type="button" title="折叠编辑器" aria-label="折叠编辑器" data-icon="chevron-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+            <button id="btn-split-orientation" class="split-orientation-btn" type="button" title="切换分屏方向" aria-label="切换分屏方向" data-icon="columns-2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></svg></button>
+            <button id="btn-fold-preview" class="split-fold-btn" type="button" title="折叠预览" aria-label="折叠预览" data-icon="chevron-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
           <div class="preview-pane" id="preview-pane">
             <div id="preview-wrapper">
               <div id="preview" class="preview-content"></div>
@@ -456,38 +487,54 @@
               </button>
             </div>
           </div>
+          <!-- 空态欢迎页：与 .editor-row 平级而非盖住整个 .editor-container，
+               这样标签栏与「+」按钮始终可点，用户随时能新建/打开第一个文档。 -->
+          <div id="empty-welcome" class="empty-welcome hidden" aria-hidden="true">
+            <div class="empty-welcome-inner">
+              <!-- 主视觉：双层稿纸 + 主题色折角 + Markdown「#」徽章（参考 VS Code 空编辑区的
+                   低对比大号水印，但保留一点品牌色点睛）。图标为自绘线性 SVG，不依赖外部资源。 -->
+              <div class="empty-welcome-hero" aria-hidden="true">
+                <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <defs>
+                    <linearGradient id="ew-paper-fill" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="var(--accent-color)" stop-opacity=".18"/>
+                      <stop offset="1" stop-color="var(--accent-color)" stop-opacity=".01"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M20 12h22l12 12v38a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V16a4 4 0 0 1 4-4Z" opacity=".26"/>
+                  <path d="M28 18h18l12 12v34a4 4 0 0 1-4 4H28a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4Z" fill="url(#ew-paper-fill)"/>
+                  <path d="M46 18v12h12" stroke="var(--accent-color)" fill="color-mix(in srgb, var(--accent-color) 22%, transparent)"/>
+                  <path d="M32 40h18" stroke="var(--accent-color)" stroke-width="2.4"/>
+                  <path d="M32 48h15M32 56h11" opacity=".42"/>
+                  <circle cx="62" cy="62" r="11" fill="var(--accent-color)" stroke="none"/>
+                  <path d="M60 57.5 58 67M65 57.5 63 67M57 60.5h10M56.5 64.5h10" stroke="var(--accent-text)" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <!-- 标题文案保留给屏幕阅读器 / i18n 测试，视觉上由上方大图标承担 -->
+              <h2 id="empty-welcome-title" class="empty-welcome-title"></h2>
+              <p id="empty-welcome-hint" class="empty-welcome-hint"></p>
+              <div class="empty-welcome-actions">
+                <!-- 按钮内部不留空白文本节点：契约测试按 textContent 断言文案 -->
+                <button id="btn-empty-new" type="button" class="empty-welcome-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M12 18v-6M9 15h6"/></svg><span id="btn-empty-new-label" class="ew-btn-label"></span></button>
+                <button id="btn-empty-open" type="button" class="empty-welcome-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.3 10H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg><span id="btn-empty-open-label" class="ew-btn-label"></span></button>
+              </div>
+              <div id="empty-welcome-recent" class="empty-welcome-recent hidden">
+                <div id="empty-welcome-recent-title" class="empty-welcome-section-title"></div>
+                <div id="empty-welcome-recent-list" class="empty-welcome-recent-list"></div>
+              </div>
+              <div class="empty-welcome-foot">
+                <p id="empty-welcome-drop" class="empty-welcome-tip"><svg class="ew-tip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M20 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/></svg><span id="empty-welcome-drop-label"></span></p>
+                <p id="empty-welcome-shortcuts" class="empty-welcome-shortcuts"></p>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="pane-loading" class="pane-loading hidden"><div class="pane-spinner"></div></div>
       </div>
-      <!-- 右侧大纲栏（窗口最右，默认展开）：分隔器在栏体左侧，拖拽即调宽 -->
-      <div class="outline-resizer outline-right-resizer" id="outline-resizer"></div>
-      <div id="outline-sidebar" class="outline-sidebar outline-sidebar--right" aria-label="大纲侧栏">
-        <div id="outline-panel" class="sidebar-tab-panel" data-panel="outline" role="region" aria-label="大纲">
-          <div class="outline-panel-header panel-header">
-            <span class="panel-title-group" id="outline-header-title" title="大纲">
-              <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
-              <span class="panel-title" data-i18n="outline">大纲</span>
-            </span>
-            <span class="header-actions">
-              <div id="outline-filter" class="outline-filter"></div>
-              <span class="header-divider" aria-hidden="true"></span>
-              <button id="btn-all-outline" class="panel-action-btn" type="button" title="展开/折叠全部大纲" aria-label="展开或折叠全部大纲">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3 3-3 3"/></svg>
-              </button>
-            </span>
-          </div>
-          <div id="outline-content" class="outline-content sidebar-panel"></div>
-        </div>
-      </div>
-      <!-- 两侧吸附把手：骑在各自分隔线上；面板收起后吸附窗口边缘并 accent 常亮，点一下即展开 -->
-      <button id="folder-float-btn" class="sidebar-float-btn folder-float-btn" type="button" title="切换文件夹栏" aria-pressed="false" aria-label="切换文件夹栏">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
-      </button>
-      <button id="sidebar-float-btn" class="sidebar-float-btn sidebar-float-btn--right sidebar-open" type="button" title="切换大纲栏" aria-pressed="true" aria-label="切换大纲栏">
+      <!-- 侧边栏吸附把手：贴在侧栏与编辑区之间的分隔线上；侧栏收起后吸附左缘并 accent 常亮，点一下即展开 -->
+      <button id="sidebar-float-btn" class="sidebar-float-btn sidebar-open" type="button" title="切换侧边栏" aria-pressed="true" aria-label="切换侧边栏">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
       </button>
-      <div class="side-btn" id="btn-side-left" title="折叠编辑器">&#9664;</div>
-      <div class="side-btn" id="btn-side-right" title="折叠预览">&#9654;</div>
     </main>
 
     <footer class="statusbar">
@@ -522,6 +569,10 @@
   <script src="lib/codemirror/addon/search/jump-to-line.js"></script>
   <script src="lib/codemirror/addon/dialog/dialog.js"></script>
   <script src="lib/codemirror/addon/selection/active-line.js"></script>
+  <!-- 源码模式区块折叠：foldcode 提供 foldCode/foldAll 等命令，foldgutter 提供行号槽里的
+       折叠箭头。折叠范围由 modules/code-fold.js 自定义（标题章节 / 围栏与公式 / 长段落）。 -->
+  <script src="lib/codemirror/addon/fold/foldcode.js"></script>
+  <script src="lib/codemirror/addon/fold/foldgutter.js"></script>
   <script src="lib/highlight.js/highlight.min.js"></script>
   <script src="lib/katex/katex.min.js"></script>
   <script src="lib/katex/auto-render.min.js"></script>
@@ -535,7 +586,7 @@
   <div id="about-dialog" class="dialog-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="about-title">
     <div class="dialog">
       <div class="dialog-header dialog-drag-handle">
-        <h2 id="about-title">关于 TizuMark</h2>
+        <h2 id="about-title">关于 TuziMark</h2>
         <button class="dialog-close" id="about-close" aria-label="关闭">&times;</button>
       </div>
       <div class="dialog-content about-content">
@@ -548,8 +599,8 @@
           </div>
           <div class="dependency-body about-version-body">
             <div class="about-app-line">
-              <span class="about-app-name">TizuMark</span>
-              <span id="about-version" class="about-version-chip">TizuMark v1.2.6</span>
+              <span class="about-app-name">TuziMark</span>
+              <span id="about-version" class="about-version-chip">TuziMark v1.2.5</span>
             </div>
             <p id="about-version-desc" class="about-version-desc">轻量级跨平台 Markdown 编辑器</p>
             <p id="about-build" class="about-build">基于 Tauri v2.5 + Rust 构建</p>
@@ -603,7 +654,7 @@
             <svg class="collapse-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
           </div>
           <div class="dependency-body">
-            <p>Copyright (c) 2024-2026 TizuMark</p>
+            <p>Copyright (c) 2024-2026 TuziMark</p>
             <p>本软件基于 GPL v3 开源协议发布。</p>
             <p>欢迎自由使用、修改和分发，衍生作品须延续 GPL v3 协议。</p>
           </div>
@@ -674,10 +725,10 @@
       </div>
       <div class="dialog-content">
         <div class="eula-scroll">
-          <h3>TizuMark 开源许可声明</h3>
-          <p>Copyright (c) 2024-2026 TizuMark</p>
+          <h3>TuziMark 开源许可声明</h3>
+          <p>Copyright (c) 2024-2026 TuziMark</p>
           <br>
-          <p>TizuMark 是基于 <a href="#" class="gpl-link">GNU General Public License v3.0 (GPL v3)</a> 发布的自由软件。</p>
+          <p>TuziMark 是基于 <a href="#" class="gpl-link">GNU General Public License v3.0 (GPL v3)</a> 发布的自由软件。</p>
           <br>
           <h4>你可以：</h4>
           <p>自由使用、复制、修改和分发本软件，包括用于商业目的。</p>
@@ -691,10 +742,10 @@
           <h4>第三方组件</h4>
           <p>本软件包含根据各自开源许可证（MIT、BSD-3-Clause、Apache-2.0 等）分发的第三方组件。这些组件的版权和许可条款可在「帮助 → 关于」页面中查看。</p>
           <hr style="margin:24px 0;border:none;border-top:1px solid var(--border-color)">
-          <h3>TizuMark Open Source License Statement</h3>
-          <p>Copyright (c) 2024-2026 TizuMark</p>
+          <h3>TuziMark Open Source License Statement</h3>
+          <p>Copyright (c) 2024-2026 TuziMark</p>
           <br>
-          <p>TizuMark is released under the <a href="#" class="gpl-link">GNU General Public License v3.0 (GPL v3)</a>.</p>
+          <p>TuziMark is released under the <a href="#" class="gpl-link">GNU General Public License v3.0 (GPL v3)</a>.</p>
           <br>
           <h4>You can:</h4>
           <p>Freely use, copy, modify, and distribute this software, including for commercial purposes.</p>
@@ -728,7 +779,7 @@
           <p id="update-state-checking-text">正在检查更新...</p>
         </div>
         <div id="update-state-available" class="hidden">
-          <p>TizuMark <span id="update-new-version" class="update-version-highlight"></span> <span id="update-available-suffix">可用</span></p>
+          <p>TuziMark <span id="update-new-version" class="update-version-highlight"></span> <span id="update-available-suffix">可用</span></p>
           <p class="update-current"><span id="update-current-version-label">当前版本: </span><span id="update-current-version"></span></p>
           <div class="update-notes">
             <h4 id="update-notes-title">更新内容</h4>
@@ -740,7 +791,7 @@
           </div>
         </div>
         <div id="update-state-downloaded" class="hidden">
-          <p>TizuMark <span id="update-dl-version" class="update-version-highlight"></span> <span id="update-dl-suffix">安装包已下载</span></p>
+          <p>TuziMark <span id="update-dl-version" class="update-version-highlight"></span> <span id="update-dl-suffix">安装包已下载</span></p>
           <p class="update-current" id="update-dl-info"></p>
         </div>
         <div id="update-state-latest" class="hidden">
@@ -804,13 +855,14 @@
     <div class="dialog confirm-dialog">
       <div class="dialog-header">
         <h2 id="confirm-dialog-title">确认</h2>
+        <button class="dialog-close" id="confirm-dialog-close" aria-label="关闭">&times;</button>
       </div>
       <div class="dialog-content">
+        <p id="confirm-dialog-message" style="white-space: pre-line;">确定要恢复默认设置吗？</p>
         <div id="confirm-dialog-warning" class="dialog-warning hidden">
           <span class="dialog-warning-icon" aria-hidden="true">⚠</span>
           <span id="confirm-dialog-warning-text"></span>
         </div>
-        <p id="confirm-dialog-message" style="white-space: pre-line;">确定要恢复默认设置吗？</p>
       </div>
       <div class="dialog-footer">
         <button id="confirm-dialog-cancel" class="dialog-btn">取消</button>
@@ -1045,6 +1097,10 @@
             <label>显示行号</label>
             <label class="toggle"><input type="checkbox" id="set-line-numbers" checked><span class="toggle-slider"></span></label>
           </div>
+          <div class="settings-row">
+            <label>源码区块折叠</label>
+            <label class="toggle"><input type="checkbox" id="set-code-folding" checked><span class="toggle-slider"></span></label>
+          </div>
           </div>
         </div>
         <div class="settings-section" data-collapsed="false">
@@ -1115,7 +1171,7 @@
             <label class="toggle"><input type="checkbox" id="set-extended-syntax" checked><span class="toggle-slider"></span></label>
             <p class="form-hint" id="setting-extended-syntax-hint">
               <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>
-              <span class="hint-text">开启后，==文字== 会渲染为黄色高亮（TizuMark 扩展语法）。关闭则 ==文字== 原样显示为普通文本，适合粘贴 AI 生成、未遵循该语法的 Markdown，避免被误当成高亮。</span>
+              <span class="hint-text">开启后，==文字== 会渲染为黄色高亮（TuziMark 扩展语法）。关闭则 ==文字== 原样显示为普通文本，适合粘贴 AI 生成、未遵循该语法的 Markdown，避免被误当成高亮。</span>
             </p>
           </div>
           <div class="settings-row">
@@ -1383,6 +1439,8 @@
     <div class="context-menu-separator"></div>
     <div class="context-menu-item" data-action="tab-copy-path"><span>复制文件路径</span></div>
     <div class="context-menu-item" data-action="tab-open-containing"><span>打开所在目录</span></div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item" data-action="tab-rename"><span>重命名</span></div>
   </div>
 
   <!-- 文件树右键菜单：action 用 file- 前缀避免与编辑器菜单的 cut/copy/paste 冲突（合并自 PR #36） -->
@@ -1411,7 +1469,7 @@
 
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-box">
-      <img class="loading-logo" src="app-icon.png" alt="TizuMark">
+      <img class="loading-logo" src="app-icon.png" alt="TuziMark">
       <div class="loading-progress-track">
         <div id="loading-progress-fill" class="loading-progress-fill"></div>
       </div>
@@ -1449,6 +1507,7 @@
 <script src="modules/theme.js"></script>
 <script src="modules/font.js"></script>
 <script src="modules/shortcuts.js"></script>
+<script src="modules/code-fold.js"></script>
 <script src="modules/editor-core.js"></script>
 <script src="modules/tabs.js"></script>
 <script src="modules/find.js"></script>

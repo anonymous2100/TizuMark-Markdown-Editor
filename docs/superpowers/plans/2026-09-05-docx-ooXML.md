@@ -2,7 +2,7 @@
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 将 TizuMark 的 Word/DOCX 导出从「HTML altChunk（html-docx-js）」重写为「真 OOXML（docx 库）」，使标题映射 Word 真样式、表格/代码块/排版保真、兼容 WPS/Google Docs、支持每次导出时选择页面尺寸与边距。
+**目标：** 将 TuziMark 的 Word/DOCX 导出从「HTML altChunk（html-docx-js）」重写为「真 OOXML（docx 库）」，使标题映射 Word 真样式、表格/代码块/排版保真、兼容 WPS/Google Docs、支持每次导出时选择页面尺寸与边距。
 
 **架构：** 主线程遍历预处理后的预览 DOM，转成一组**可序列化的中间节点结构**（纯 JSON，可 postMessage）；worker 内 `importScripts` 打包好的 `docx.min.js`（全局 `DocxLib`），把中间结构重建为 `DocxLib.Document` 并 `Packer.toBlob`，返回 ArrayBuffer。保留现有 `exportWord()` 的确认框、loading overlay、保存对话框、图片尺寸采集、`_prepareWordDOM`；新增 `_domToDocxNodes` 中间结构转换，替换最后的 `asBlob` 步骤；保留 html-docx altChunk 作为回退。
 

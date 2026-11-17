@@ -1,5 +1,5 @@
 // Tests for GitHub-style math fences (```math / ```latex / ```tex) support.
-// TizuMark normalizes these fences into $$...$$ blocks in the renderer, so they
+// TuziMark normalizes these fences into $$...$$ blocks in the renderer, so they
 // render through the existing KaTeX (processMath) pipeline — matching GitHub/Gitee
 // block-math behavior (fence body needs no $$ wrapping, just like GitHub).
 const test = require('node:test');

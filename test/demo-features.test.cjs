@@ -111,7 +111,7 @@ test('行内：上标 <sup> / 下标 <sub> 原生 HTML 透传', async () => {
 // ============================================================
 
 test('引用：单一引用块 -> <blockquote>', async () => {
-  const { off } = renderBoth('> 单一引用：TizuMark 的设计哲学是"简单就是力量"。');
+  const { off } = renderBoth('> 单一引用：TuziMark 的设计哲学是"简单就是力量"。');
   assert.ok(/<blockquote[^>]*>[\s\S]*简单就是力量/.test(off), '应生成引用块并保留内容');
 });
 
@@ -185,7 +185,7 @@ test('Callout：提示框内容支持列表', async () => {
 });
 
 test('Callout：提示框内容支持代码块', async () => {
-  const md = '> 在 TizuMark 中构建项目：\n>\n> ```shell\n> npm run build\n> ```\n>\n> 构建产物位于 `src-tauri/target/release/`。';
+  const md = '> 在 TuziMark 中构建项目：\n>\n> ```shell\n> npm run build\n> ```\n>\n> 构建产物位于 `src-tauri/target/release/`。';
   const { off } = renderBoth(md);
   assert.ok(/npm run build/.test(off), '代码块内容应保留');
   assert.ok(/src-tauri\/target\/release/.test(off), '行内代码应保留');
@@ -220,12 +220,12 @@ test('列表：任务列表 勾选/未勾选', async () => {
 });
 
 test('列表：定义列表 -> dl/dt/dd', async () => {
-  const md = 'MarkDown\n: 一种轻量级标记语言，由 John Gruber 创建\n\nTizuMark\n: 基于 Tauri + Rust 构建';
+  const md = 'MarkDown\n: 一种轻量级标记语言，由 John Gruber 创建\n\nTuziMark\n: 基于 Tauri + Rust 构建';
   const { off } = renderBoth(md);
   assert.ok(/<dl[ >]/.test(off), '应生成 dl');
   assert.ok(/<dt[^>]*>MarkDown<\/dt>/.test(off), 'dt 应为术语');
   assert.ok(/<dd[^>]*>一种轻量级标记语言/.test(off), 'dd 应为释义');
-  assert.ok(/<dt[^>]*>TizuMark<\/dt>/.test(off), '第二个定义项也应渲染');
+  assert.ok(/<dt[^>]*>TuziMark<\/dt>/.test(off), '第二个定义项也应渲染');
 });
 
 // ============================================================
@@ -248,11 +248,11 @@ test('表格：左/中/右对齐 -> text-align 样式', async () => {
 });
 
 test('表格：单元格内支持加粗/行内代码/链接', async () => {
-  const md = '| 加粗 | 代码 | 链接 |\n|------|----------|----------|\n| **重要** | `const x = 1` | [TizuMark](https://gitee.com/tizu/TizuMark-Markdown-Editor) |';
+  const md = '| 加粗 | 代码 | 链接 |\n|------|----------|----------|\n| **重要** | `const x = 1` | [TuziMark](https://gitee.com/tizu/TizuMark-Markdown-Editor) |';
   const { off } = renderBoth(md);
   assert.ok(/<strong[^>]*>重要<\/strong>/.test(off), '单元格加粗');
   assert.ok(/<code[^>]*>const x = 1<\/code>/.test(off), '单元格行内代码');
-  assert.ok(/<a href="https:\/\/gitee.com\/tizu\/TizuMark-Markdown-Editor"[^>]*>TizuMark<\/a>/.test(off), '单元格链接');
+  assert.ok(/<a href="https:\/\/gitee.com\/tizu\/TizuMark-Markdown-Editor"[^>]*>TuziMark<\/a>/.test(off), '单元格链接');
 });
 
 test('表格：引用块内懒续表格（历史 bug 回归）', async () => {
@@ -359,24 +359,24 @@ test('数学：行内 $$ 不被当作独立公式（行首之外）', async () =
 // ============================================================
 
 test('链接：标准外链 -> <a href>', async () => {
-  const { off } = renderBoth('[TizuMark 项目仓库](https://gitee.com/tizu/TizuMark-Markdown-Editor)');
-  assert.ok(/<a href="https:\/\/gitee.com\/tizu\/TizuMark-Markdown-Editor"[^>]*>TizuMark 项目仓库<\/a>/.test(off), '应生成外链 a 标签');
+  const { off } = renderBoth('[TuziMark 项目仓库](https://gitee.com/tizu/TizuMark-Markdown-Editor)');
+  assert.ok(/<a href="https:\/\/gitee.com\/tizu\/TizuMark-Markdown-Editor"[^>]*>TuziMark 项目仓库<\/a>/.test(off), '应生成外链 a 标签');
 });
 
 test('链接：参考式 [text][ref] + 定义', async () => {
-  const md = '参考 [TizuMark][ref-example] 项目。\n\n[ref-example]: https://gitee.com/tizu/TizuMark-Markdown-Editor';
+  const md = '参考 [TuziMark][ref-example] 项目。\n\n[ref-example]: https://gitee.com/tizu/TizuMark-Markdown-Editor';
   const { off } = renderBoth(md);
-  assert.ok(/<a href="https:\/\/gitee.com\/tizu\/TizuMark-Markdown-Editor"[^>]*>TizuMark<\/a>/.test(off), '参考式链接应解析');
+  assert.ok(/<a href="https:\/\/gitee.com\/tizu\/TizuMark-Markdown-Editor"[^>]*>TuziMark<\/a>/.test(off), '参考式链接应解析');
 });
 
 test('链接：裸 URL 自动识别为链接', async () => {
-  const { off } = renderBoth('直接写 https://www.tizumark.app 会被识别');
-  assert.ok(/<a href="https:\/\/www\.tizumark\.app"[^>]*>https:\/\/www\.tizumark\.app<\/a>/.test(off), '裸 URL 应自动链接');
+  const { off } = renderBoth('直接写 https://www.tuzimark.app 会被识别');
+  assert.ok(/<a href="https:\/\/www\.tuzimark\.app"[^>]*>https:\/\/www\.tuzimark\.app<\/a>/.test(off), '裸 URL 应自动链接');
 });
 
 test('链接：邮箱自动识别为 mailto', async () => {
-  const { off } = renderBoth('联系 contact@tizumark.app 即可');
-  assert.ok(/<a href="mailto:contact@tizumark\.app"[^>]*>contact@tizumark\.app<\/a>/.test(off), '邮箱应自动链接');
+  const { off } = renderBoth('联系 contact@tuzimark.app 即可');
+  assert.ok(/<a href="mailto:contact@tuzimark\.app"[^>]*>contact@tuzimark\.app<\/a>/.test(off), '邮箱应自动链接');
 });
 
 test('链接：内部中文锚点 href 解码后与标题 id 一致', async () => {
@@ -400,8 +400,8 @@ test('链接：原生 HTML <a> 透传', async () => {
 });
 
 test('链接：带标题的链接保留 title', async () => {
-  const { off } = renderBoth('[官网](https://tizumark.app "TizuMark 官网")');
-  assert.ok(/<a href="https:\/\/tizumark\.app"[^>]*title="TizuMark 官网"[^>]*>官网<\/a>/.test(off), '链接 title 应保留');
+  const { off } = renderBoth('[官网](https://tuzimark.app "TuziMark 官网")');
+  assert.ok(/<a href="https:\/\/tuzimark\.app"[^>]*title="TuziMark 官网"[^>]*>官网<\/a>/.test(off), '链接 title 应保留');
 });
 
 test('链接：demo 多锚点跳转行（三个中文锚点均能匹配对应标题）', async () => {
@@ -425,8 +425,20 @@ test('链接：demo 多锚点跳转行（三个中文锚点均能匹配对应标
 // ============================================================
 
 test('图片：远程 URL', async () => {
-  const { off } = renderBoth('![示例图片](https://picsum.photos/800/400)');
-  assert.ok(/<img src="https:\/\/picsum\.photos\/800\/400"[^>]*alt="示例图片"/.test(off), '远程图片应渲染');
+  const { off } = renderBoth('![示例图片](https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800)');
+  assert.ok(/<img src="https:\/\/images\.unsplash\.com\/photo-1506744038136-46273834b3fb\?w=800"[^>]*alt="示例图片"/.test(off), '远程图片应渲染');
+});
+
+test('图片：demo.md / testdemo.md 的外链图不再使用已失效的 picsum', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const NEW_URL = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800';
+  for (const name of ['demo.md', 'testdemo.md']) {
+    const src = fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+    assert.ok(!src.includes('picsum.photos'), `${name} 不应再引用已失效的 picsum.photos`);
+    assert.strictEqual(src.split(NEW_URL).length - 1, 2,
+      `${name} 的渲染效果与对应语法示例应同时指向新链接`);
+  }
 });
 
 test('图片：相对路径', async () => {
@@ -531,11 +543,12 @@ test('转义：\\* \\# \\[ \\\\ 均还原为字面量', async () => {
   assert.ok(/井号不再是标题/.test(off) && !/<h/.test(off.split('井号')[0].slice(-50)), '\\# 不应生成标题');
   assert.ok(/不再被解析为链接/.test(off), '\\[ 应还原');
   assert.ok(/反斜杠本身/.test(off), '\\\\ 应还原为单个反斜杠');
-  // 配对 \[...\] / \(...\) 也应还原为字面括号（回归：文献引用 \[J/OL\] 不应被当公式）
-  const { off: off2 } = renderBoth('引用 \\[J/OL\\] 与 \\(x\\) 均作字面量');
+  // 配对 \[...\] 应还原为字面括号（回归：文献引用 \[J/OL\] 不应被当公式）；
+  // 行内 \(...\) 默认按公式渲染，只有中文夹注/英文散文才回退为字面量。
+  const { off: off2 } = renderBoth('引用 \\[J/OL\\] 与 \\(x\\) 与 \\(见附录\\) 均不回退为垃圾');
   assert.ok(/\[J\/OL\]/.test(off2), '成对的 \\[...\\] 应还原为字面 [J/OL]');
-  assert.ok(/\(x\)/.test(off2), '成对的 \\(...\\) 应还原为字面 (x)');
-  assert.ok(!/math/.test(off2), '不应生成数学块');
+  assert.ok(/\$x\$/.test(off2), '成对的 \\(x\\) 应按公式渲染');
+  assert.ok(/\(见附录\)/.test(off2), '中文夹注 \\(见附录\\) 应还原为字面括号');
 });
 
 // ============================================================

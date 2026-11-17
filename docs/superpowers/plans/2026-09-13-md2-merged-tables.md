@@ -7,7 +7,7 @@
 >
 > **⚠️ 提交红线（本仓库 CLAUDE.md 规则 5）：** 本计划每个任务末尾都有 commit 步骤（TDD 惯例）。但本仓库规定**提交/推送属红线操作，必须用户明确说「提交/commit」后才执行**。执行者应在每个任务结束时**暂停并请求确认**，或按用户指示批量提交。不要擅自 `git commit`。
 
-**目标：** 让 TizuMark 的预览渲染支持 md2 语法的合并单元格表格（网格语法 `+---+` + 管道简写 `>>` / `^^`），产出带 `colspan`/`rowspan` 的 HTML。
+**目标：** 让 TuziMark 的预览渲染支持 md2 语法的合并单元格表格（网格语法 `+---+` + 管道简写 `>>` / `^^`），产出带 `colspan`/`rowspan` 的 HTML。
 
 **架构：** 把 md2 的表格解析（`grid.rs` / `pipe.rs`）移植为 JS 模块置于 `src/md2/`，由 `src/unified-renderer.js` 在 unified 管线**之前**以逐行扫描的方式调用（与既有 `convertContainerTables` 同形态），产出的 AST 经 `html.js` 渲染为原生 HTML 后拼回行流。AST 保留 md2 的「全网格」表示（anchor + covered），不使用字符串直出，以便子项目 2/4 复用。
 
@@ -47,7 +47,7 @@
 
 - `src/md2/*.js` 一律 CommonJS（`module.exports` / `require`），**不产生 `window` 全局** → `check-globals` 与 `entry-scripts` 两个守卫看不到它们，无需改动守卫配置
 - 每个模块的导出保持最小面；`grid.js` / `pipe.js` 导出解析函数，`scan.js` 导出扫描器
-- 单元格内容在 AST 中保留为**原始字符串**（不预解析为块），由 `html.js` 注入的渲染回调处理——这样 TizuMark 可以把内容回灌 unified 管线获得完整 CommonMark
+- 单元格内容在 AST 中保留为**原始字符串**（不预解析为块），由 `html.js` 注入的渲染回调处理——这样 TuziMark 可以把内容回灌 unified 管线获得完整 CommonMark
 
 ---
 
@@ -369,7 +369,7 @@ test('columnCount 无行时为 0，空表通过、非空 alignments 的空表被
 //   - covered：矩形内其余位置，covered=true、内容为空、colspan=rowspan=1
 //
 // 与 Rust 版本的差异：content 保存**原始字符串**而非已解析的块。
-// md2 用 pulldown-cmark 解析单元格内容；TizuMark 把这一步交给注入的
+// md2 用 pulldown-cmark 解析单元格内容；TuziMark 把这一步交给注入的
 // 渲染回调（见 html.js），从而让单元格内容回灌 unified 管线获得完整
 // CommonMark（含 KaTeX / Mermaid / 脚注等既有后处理）。
 'use strict';
@@ -501,7 +501,7 @@ git commit -m "feat(md2): 新增表格 AST 与平铺不变量校验"
 - 创建：`src/md2/html.js`
 - 测试：`test/md2-html.test.cjs`
 
-**设计要点：** 单元格内容渲染**注入**（`renderCellContent` 回调），`html.js` 本身不依赖 unified。这样 `html.js` 保持纯净可单测，TizuMark 则注入基于 unified 管线的渲染器。
+**设计要点：** 单元格内容渲染**注入**（`renderCellContent` 回调），`html.js` 本身不依赖 unified。这样 `html.js` 保持纯净可单测，TuziMark 则注入基于 unified 管线的渲染器。
 
 - [ ] **步骤 1：编写失败的测试**
 
@@ -513,7 +513,7 @@ git commit -m "feat(md2): 新增表格 AST 与平铺不变量校验"
 //   - colspan/rowspan 仅在 > 1 时输出
 //   - covered cell **完全不产出元素**（该行 td 数少于列数）
 //   - headerRowCount > 0 → <thead> 全 th；其余进 <tbody> 用 td
-//   - 对齐用 TizuMark 约定的 align 属性（非 md2 的内联 style）
+//   - 对齐用 TuziMark 约定的 align 属性（非 md2 的内联 style）
 const test = require('node:test');
 const assert = require('node:assert');
 const { Alignment, cell, coveredCell } = require('../src/md2/ast.js');
@@ -719,7 +719,7 @@ test('covered 位置不触发单元格渲染回调（回调会重入整条管线
 // md2 表格 AST → HTML（对应 md2 crates/md2-core/src/html.rs 的表部分）。
 //
 // 与 md2 的**有意差异共两处**：
-//   (1) 对齐用 TizuMark 既有的 align 属性（配合 src/styles.css:2138 的
+//   (1) 对齐用 TuziMark 既有的 align 属性（配合 src/styles.css:2138 的
 //       th[align="center"] 选择器），而非 md2 的内联 style="text-align:"。
 //       该差异由一致性门禁的归一化吸收。
 //   (2) 结尾 `</table>` 不带尾随换行（上游 html.rs:179 带 \n）。这对消费方无害
@@ -1108,7 +1108,7 @@ module.exports = { looksLikeBorder, unescapedPipeAt, parseBorderShape, pIndexOf 
 > - `| ﻿---﻿ | --- |` → JS 判 `isDelimiterRow = true`；md2 判非表
 > - `U+0085` 方向的差异与上述相反
 >
-> **实际可达性极低**：TizuMark 的文件读取路径 `decode_bytes`（`src-tauri/src/lib.rs:210`，调用点 `:150/:165/:175/:586`）会剥离行首 UTF-8 BOM，故「BOM 开头的文件」到不了解析层；仅当这两个码点出现在文档**中部**（粘贴/输入）时才会触发。golden 夹具不含，一致性门禁（任务 10）不受影响。
+> **实际可达性极低**：TuziMark 的文件读取路径 `decode_bytes`（`src-tauri/src/lib.rs:210`，调用点 `:150/:165/:175/:586`）会剥离行首 UTF-8 BOM，故「BOM 开头的文件」到不了解析层；仅当这两个码点出现在文档**中部**（粘贴/输入）时才会触发。golden 夹具不含，一致性门禁（任务 10）不受影响。
 >
 > **若日后要完全对齐**：引入一个共享的 `rustTrim(s)` 助手（显式 Unicode White_Space 类，**不含** `U+FEFF`、**含** `U+0085`），替换上述全部站点，并两处同步加测试。属独立的清理任务，不在本计划的完成标准内。
 
@@ -1937,7 +1937,7 @@ git commit -m "feat(md2): 网格表完整解析（边框扫描/角规则/点线 
 - 创建：`src/md2/pipe.js`
 - 测试：`test/md2-pipe.test.cjs`
 
-**与 Rust 版本的有意差异：** `pipe.rs:359` 的 `parse_pipe_cell_content` 会用 pulldown-cmark 把格内容解析成内联节点，并处理行尾反斜杠硬换行（§4.8）。TizuMark 保留**原始字符串**交由注入的渲染回调处理，故这部分不需要移植 —— 行尾反斜杠在渲染阶段由 CommonMark 规则自然处理，且 md2 自己也就该场景声明「无可见效果」（见 `pipe.rs:354-358` 注释）。
+**与 Rust 版本的有意差异：** `pipe.rs:359` 的 `parse_pipe_cell_content` 会用 pulldown-cmark 把格内容解析成内联节点，并处理行尾反斜杠硬换行（§4.8）。TuziMark 保留**原始字符串**交由注入的渲染回调处理，故这部分不需要移植 —— 行尾反斜杠在渲染阶段由 CommonMark 规则自然处理，且 md2 自己也就该场景声明「无可见效果」（见 `pipe.rs:354-358` 注释）。
 
 - [ ] **步骤 1：编写失败的测试**
 
@@ -3194,7 +3194,7 @@ git commit -m "feat(md2): 表格解析错误块样式"
 **归一化规则**（设计规格「一致性门禁」节）：
 1. 解析为元素树 → 2. 元素名/层级/顺序 → 3. cell 的 colspan/rowspan（缺省 1）→ 4. covered 应省略（该行 cell 数一致）→ 5. 单元格文本（空白折叠）→ 6. 对齐值归一（`style="text-align:X"` 与 `align="X"` 视为同一个 X）
 
-**⚠️ 门禁的诚实边界：** 本门禁比较的是**表格骨架 + 合并结构 + 单元格文本 + 对齐**，**不比较单元格内部的标记细节**。md2 的 `html.rs` 把单段落单元格渲染为裸行内内容（`<td>A 2x2</td>`），而 TizuMark 回灌 unified 会产生 `<p>` 包裹。两者文本相同、结构相同，但内部标记不同——这是**有意接受**的差异，门禁不覆盖它。
+**⚠️ 门禁的诚实边界：** 本门禁比较的是**表格骨架 + 合并结构 + 单元格文本 + 对齐**，**不比较单元格内部的标记细节**。md2 的 `html.rs` 把单段落单元格渲染为裸行内内容（`<td>A 2x2</td>`），而 TuziMark 回灌 unified 会产生 `<p>` 包裹。两者文本相同、结构相同，但内部标记不同——这是**有意接受**的差异，门禁不覆盖它。
 
 - [ ] **步骤 1：复制夹具**
 
@@ -3229,7 +3229,7 @@ cp C:/s/md2/test_data/golden/13_grid_two_headers_rowspan.html test/fixtures/md2-
 
 用途：`test/md2-conformance.test.cjs` 的一致性门禁。归一化后比较
 表格骨架、colspan/rowspan、covered 省略、单元格文本与对齐。
-**不**比较单元格内部的标记细节（md2 输出裸行内内容，TizuMark 回灌 unified 会加 `<p>` 包裹）。
+**不**比较单元格内部的标记细节（md2 输出裸行内内容，TuziMark 回灌 unified 会加 `<p>` 包裹）。
 
 同步日期：2026-09-13
 ```
@@ -3316,8 +3316,8 @@ test('th 与 td 都计为 cell', () => {
 ```js
 // md2 一致性门禁的归一化器。
 //
-// 目的：把 TizuMark 与 md2 的输出归一到可比较的规范形式，吸收两者的
-// **有意差异**（对齐编码：md2 用内联 style，TizuMark 用 align 属性）。
+// 目的：把 TuziMark 与 md2 的输出归一到可比较的规范形式，吸收两者的
+// **有意差异**（对齐编码：md2 用内联 style，TuziMark 用 align 属性）。
 //
 // 比较范围（设计规格「一致性门禁」节）：
 //   1. 元素树     2. 元素名/层级/顺序   3. colspan / rowspan（缺省 1）
@@ -3325,7 +3325,7 @@ test('th 与 td 都计为 cell', () => {
 //   6. 对齐值归一
 //
 // **不比较**单元格内部的标记细节：md2 把单段落单元格输出为裸行内内容，
-// TizuMark 回灌 unified 会产生 <p> 包裹。文本与结构相同，标记不同。
+// TuziMark 回灌 unified 会产生 <p> 包裹。文本与结构相同，标记不同。
 'use strict';
 
 const { JSDOM } = require('jsdom');
@@ -3416,7 +3416,7 @@ for (const name of GRID_FIXTURES) {
     assert.strictEqual(
       ours.length,
       theirs.length,
-      `表格数量不一致：TizuMark ${ours.length}，md2 ${theirs.length}`
+      `表格数量不一致：TuziMark ${ours.length}，md2 ${theirs.length}`
     );
     assert.deepStrictEqual(ours, theirs);
   });
@@ -3474,7 +3474,7 @@ git commit -m "test(md2): 一致性门禁（结构等价归一化 + md2 golden �
 ② 在「一致性门禁」节的归一化规则列表之后追加：
 
 ```markdown
-**门禁的诚实边界：** 本门禁比较表格骨架、合并结构、单元格文本与对齐，**不比较单元格内部的标记细节**。md2 把单段落单元格输出为裸行内内容，TizuMark 回灌 unified 会产生 `<p>` 包裹——文本与结构一致，标记不同，此为有意接受的差异。
+**门禁的诚实边界：** 本门禁比较表格骨架、合并结构、单元格文本与对齐，**不比较单元格内部的标记细节**。md2 把单段落单元格输出为裸行内内容，TuziMark 回灌 unified 会产生 `<p>` 包裹——文本与结构一致，标记不同，此为有意接受的差异。
 ```
 
 - [ ] **步骤 2：运行全部 md2 相关测试**
@@ -3614,7 +3614,7 @@ git commit -m "docs(md2): 同步实现期对设计规格的两处修正（重入
 - md2 仓库：`C:\s\md2`（MIT，v0.1）
 - md2 解析源：`crates/md2-core/src/parse/{grid,pipe,mod}.rs`
 - md2 AST/渲染：`crates/md2-core/src/{ast,html,error}.rs`
-- TizuMark 渲染器：`src/unified-renderer.js`（前置扫描先例 `:591-670`，调用点 `:1482-1483`）
+- TuziMark 渲染器：`src/unified-renderer.js`（前置扫描先例 `:591-670`，调用点 `:1482-1483`）
 - 表格样式：`src/styles.css:2107-2139`
 - 打印路径（子项目 2 相关）：`src/modules/export.js:1343-1391`、`src/styles.css:5777-5797`
 

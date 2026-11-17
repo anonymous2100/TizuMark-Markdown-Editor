@@ -1,4 +1,4 @@
-# Guía de uso de TizuMark
+# Guía de uso de TuziMark
 
 > Un editor de Markdown rápido y elegante: desde los conceptos básicos hasta el dominio total
 
@@ -10,12 +10,12 @@
 
 ### Descripción de la interfaz
 
-La interfaz de TizuMark consta de cuatro áreas principales:
+La interfaz de TuziMark consta de cuatro áreas principales:
 
 | Área | Posición | Propósito |
 |------|----------|-----------|
 | **Barra de herramientas superior** | Superior | Operaciones con archivos, inserción rápida, modos de vista, temas, ayuda |
-| **Barras laterales** | Archivos a la izquierda / Esquema a la derecha | Navegación por esquema y árbol de archivos (al abrir una carpeta); cada lado se contrae de forma independiente |
+| **Barra lateral** | Izquierda | Navegación por esquema y árbol de archivos (paneles con pestañas) |
 | **Editor** | Centro | CodeMirror con resaltado de sintaxis Markdown y autocierre de corchetes / comillas |
 | **Vista previa** | Derecha | Markdown renderizado en tiempo real con sincronización de desplazamiento |
 
@@ -29,7 +29,7 @@ La interfaz de TizuMark consta de cuatro áreas principales:
 | Guardar archivo | `Archivo → Guardar` | <kbd>Ctrl</kbd> + <kbd>S</kbd> |
 | Guardar como | `Archivo → Guardar como` | — |
 | Archivos recientes | `Archivo → Archivos recientes` | — |
-| Abrir desde terminal | `tizumark.exe documento.md` | — |
+| Abrir desde terminal | `tuzimark.exe documento.md` | — |
 | Cerrar pestaña | Clic en × de la pestaña o clic derecho | <kbd>Ctrl</kbd> + <kbd>W</kbd> |
 
 > **Arrastra y suelta** archivos `.md` directamente dentro de la ventana (admite múltiples archivos). `Archivo → Archivos recientes` permite reabrir rápidamente documentos editados con anterioridad.
@@ -46,28 +46,27 @@ Las tres pestañas en el centro de la barra de herramientas alternan entre tres 
 - **Código**: Escritura a la izquierda y vista previa renderizada a la derecha.
 - **Vista en vivo**: Como Typora: el texto mantiene su aspecto renderizado mientras el bloque bajo el cursor muestra el código Markdown.
 
-En modo código:
+En el modo código, el divisor central aloja tres botones de control: **Contraer editor**, **Alternar división horizontal/vertical** y **Contraer vista previa**. Arrastra el divisor para redimensionar (la proporción de cada orientación se recuerda por separado). **Doble clic en el divisor** también cambia la orientación. Tras contraer un panel, el botón de restauración se convierte en un asa semicircular anclada al borde (color de acento); haz clic en ella para expandir de nuevo.
 
 | Acción | Método |
 |--------|--------|
-| Contraer editor | Clic en el botón izquierdo <kbd>◄</kbd> |
-| Contraer vista previa | Clic en el botón derecho <kbd>►</kbd> |
+| Contraer editor / vista previa | Clic en los botones de plegado del divisor (clic en el asa anclada para restaurar) |
+| Cambiar orientación de la división | Clic en el botón central del divisor, o doble clic en el divisor |
 | Redimensionar paneles | Arrastra el divisor central |
 
-### Barras laterales: Archivos (izquierda) y Esquema (derecha)
+### Barra lateral: Archivos y Esquema
 
-La barra lateral se divide en **dos paneles independientes**: **Archivos** en el extremo izquierdo de la ventana y **Esquema** en el extremo derecho. Cada uno tiene un asa flotante delgada sobre su propio divisor:
+La barra lateral está a la izquierda de la ventana y tiene **dos pestañas — Esquema y Archivos** — en la parte superior. Solo se muestra un panel a la vez; haz clic en una pestaña para cambiar:
 
-- Clic en el asa izquierda para contraer / expandir **Archivos**; clic en el asa derecha para **Esquema**; son independientes.
-- Al contraerse el panel se oculta por completo y solo queda un asa de 16px en el borde (resaltada); un clic la expande.
-- **Estado por defecto: Esquema expandido, Archivos contraído.**
-- El estado abierto/cerrado y el ancho de cada panel se recuerdan, así que **al reabrir la ventana todo vuelve como lo dejaste**.
-- Arrastra el divisor interior de cada panel para ajustar su ancho (80–500px).
-- Al abrir una carpeta de trabajo se expande el panel izquierdo de Archivos; al abrir un documento Markdown se expande el panel derecho de Esquema.
+- Haz clic en el **asa flotante del borde izquierdo** (o usa el atajo «Alternar barra lateral») para contraer / expandir toda la barra. Al contraerse solo queda un asa de 16px en el borde (resaltada); un clic la restaura.
+- **La pestaña elegida se recuerda**: al reabrir la ventana vuelve la última pestaña en la que estabas. Al abrir un documento Markdown se cambia a Esquema automáticamente, sin sobrescribir tu elección manual.
+- Arrastra el divisor del borde derecho de la barra para ajustar su ancho (80–500px); el ancho también se recuerda.
+- Al abrir una carpeta de trabajo se cambia a la pestaña Archivos.
+- Al abrir cualquier archivo, el árbol se expande y se posiciona en su carpeta; si aún no hay espacio de trabajo, esa carpeta pasa a ser la raíz del árbol y se listan todos sus archivos (solo el árbol; no se cambia la pestaña actual).
 
 **Esquema**: Muestra automáticamente la estructura de títulos del documento (H1–H6), indentada por niveles. **Haz clic en cualquier título**: la vista previa se desplaza y centra en él inmediatamente. El esquema se actualiza en tiempo real mientras escribes.
 
-**Archivos**: Tras abrir un directorio con `Archivo → Abrir carpeta`, este panel presenta un árbol de archivos. Haz clic en cualquier archivo para abrirlo en una pestaña. El árbol monitorea la carpeta en busca de adiciones o eliminaciones externas y se actualiza de forma automática.
+**Archivos**: Tras abrir un directorio con `Archivo → Abrir carpeta`, este panel presenta un árbol de archivos. Haz clic en cualquier archivo para abrirlo en una pestaña. El árbol monitorea la carpeta en busca de adiciones o eliminaciones externas y se actualiza de forma automática. El **título «Archivos» en sí** es pulsable y abre un selector de carpetas para cambiar el espacio de trabajo; la **ruta** bajo el título abre la carpeta actual en el explorador del sistema; el botón **«Subir un nivel»** en la barra de título regresa al directorio padre.
 
 ### Edición multipestaña
 
@@ -82,7 +81,7 @@ La barra lateral se divide en **dos paneles independientes**: **Archivos** en el
 
 Las pestañas con cambios sin guardar muestran un indicador `*`.
 
-**Restauración de sesión**: Al reabrir TizuMark, se restauran automáticamente las pestañas anteriores, el espacio de trabajo de la carpeta y los directorios expandidos, continuando exactamente donde lo dejaste.
+**Restauración de sesión**: Al reabrir TuziMark, se restauran automáticamente las pestañas anteriores, el espacio de trabajo de la carpeta y los directorios expandidos, continuando exactamente donde lo dejaste.
 
 ### Buscar y reemplazar
 
@@ -108,11 +107,11 @@ Tres menús contextuales de clic derecho para optimizar el flujo de trabajo:
 
 - **Editor**: Cortar / Copiar / Pegar / Inserción de estructura / Formato de texto / Listas / Enlaces y multimedia / Buscar y reemplazar / Seleccionar todo
 - **Vista previa**: Copiar / Seleccionar todo / Copiar como HTML / Buscar en vista previa
-- **Pestaña**: Cerrar / Cerrar las demás / Cerrar todas / Copiar ruta del archivo
+- **Pestaña**: Cerrar / Cerrar las demás / Cerrar todas / **Renombrar** / Copiar ruta del archivo / Abrir carpeta contenedora (renombrar un archivo guardado también lo renombra en disco)
 
 ### Aviso de modificación externa
 
-Cuando un archivo abierto es modificado por otro programa externo a TizuMark, aparece una barra superior con las opciones **Recargar** / **Ignorar** / **Recargar todo** / **Ignorar todo**, garantizando que nunca sobrescribas cambios por error.
+Cuando un archivo abierto es modificado por otro programa externo a TuziMark, aparece una barra superior con las opciones **Recargar** / **Ignorar** / **Recargar todo** / **Ignorar todo**, garantizando que nunca sobrescribas cambios por error.
 
 ### Protección para documentos extensos
 
@@ -266,7 +265,7 @@ Novedades de sintaxis: delimitadores LaTeX `\(...\)` (en línea) y `\[…\]` (en
 
 ## Gestión de imágenes
 
-TizuMark ofrece soporte integral de imágenes con múltiples métodos de inserción y deduplicación automática.
+TuziMark ofrece soporte integral de imágenes con múltiples métodos de inserción y deduplicación automática.
 
 ### Métodos de inserción
 
@@ -326,8 +325,8 @@ Haz clic en cualquier imagen de la vista previa para abrir el visor interactivo:
 ### Exportar PDF
 
 `Archivo → Exportar PDF` (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>):
-- Utiliza la ventana de impresión del sistema.
-- Permite seleccionar "Guardar como PDF", ajustar márgenes y orientación.
+- Tras una confirmación suave, el PDF se **exporta directamente** con una notificación de éxito, sin pasar por el diálogo de impresión.
+- Solo cuando el runtime de WebView2 es demasiado antiguo se recurre al diálogo de impresión del sistema (donde puedes elegir "Guardar como PDF" y ajustar márgenes y orientación).
 - Fórmulas y diagramas Mermaid se renderizan nítidamente.
 
 ### Exportar DOCX
@@ -378,5 +377,5 @@ Verifica la sintaxis: en línea `$...$`, en bloque `$$...$$`.
 ---
 
 <p align="center">
-  <b>TizuMark — Escribe a la velocidad del pensamiento</b>
+  <b>TuziMark — Escribe a la velocidad del pensamiento</b>
 </p>

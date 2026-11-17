@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Yoong Hor Meng
 //
-// TizuMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
+// TuziMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
 // Copyright (c) 2026 The md2 authors，上游许可全文见
 // test/fixtures/md2-golden/LICENSE）。
 // 本仓库整体以 GPL-3.0 分发（见根目录 LICENSE）；上面的 MIT 标识说明的是
-// 本文件自身的许可，不改变 TizuMark 的整体许可。
+// 本文件自身的许可，不改变 TuziMark 的整体许可。
 // md2 一致性门禁的归一化器。
 //
-// 目的：把 TizuMark 与 md2 的输出归一到可比较的规范形式，吸收两者的
-// **有意差异**（对齐编码：md2 用内联 style，TizuMark 用 align 属性）。
+// 目的：把 TuziMark 与 md2 的输出归一到可比较的规范形式，吸收两者的
+// **有意差异**（对齐编码：md2 用内联 style，TuziMark 用 align 属性）。
 //
 // 比较范围（设计规格「一致性门禁」节）：
 //   1. 元素树     2. 元素名/层级/顺序   3. colspan / rowspan（缺省 1）
@@ -17,7 +17,7 @@
 //   6. 对齐值归一
 //
 // **不比较**单元格内部的标记细节：md2 把单段落单元格输出为裸行内内容，
-// TizuMark 回灌 unified 会产生 <p> 包裹。文本与结构相同，标记不同。
+// TuziMark 回灌 unified 会产生 <p> 包裹。文本与结构相同，标记不同。
 'use strict';
 
 const { JSDOM } = require('jsdom');

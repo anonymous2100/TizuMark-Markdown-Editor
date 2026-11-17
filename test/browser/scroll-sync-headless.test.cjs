@@ -37,7 +37,7 @@ const puppeteer = require('puppeteer-core');
 // 足够长、含中部的任务列表（勾选框测试需要），行数足以滚动
 function buildDemo() {
   const lines = [];
-  lines.push('# TizuMark 无头浏览器回归测试');
+  lines.push('# TuziMark 无头浏览器回归测试');
   lines.push('');
   lines.push('这是一个用于验证滚动同步与勾选框交互的纯文本文档。下方有若干章节，');
   lines.push('用来制造可以滚动的高度差。');

@@ -183,4 +183,218 @@ if (missing > 0) {
   process.exit(1);
 }
 
+// TuziMark html2canvas 本地补丁（2026-10-22 导出长图「Error parsing CSS component
+// value, unexpected EOF」修复）：
+// 根因：DocumentCloner.cloneNode 会向元素插入 ::before/::after 伪元素克隆。
+// 被替换元素（INPUT/SELECT/TEXTAREA/IFRAME）的子节点浏览器不做布局，
+// 插进其内的伪元素 getComputedStyle 全为空串，html2canvas 随后用空声明
+// 构建伪元素样式容器时 CSS 分词器抛 unexpected EOF。触发源：任务列表
+// 复选框 <input type=checkbox>——任何含任务项的文档导出 PNG 长图必崩
+// （Word/PDF/HTML 导出不经过 html2canvas，不受影响；复选框本体由本库 pB
+// 容器绘制含选中对勾，外观不受影响）。
+// 补丁 = cloneNode 两处伪元素插入加 !(_B(A)||tn(A)||en(A)||An(A)) 守卫
+// （四个谓词即本库对 INPUT/SELECT/TEXTAREA/IFRAME 的既有判定）。
+// 口径同 CM5 补丁：marker = 幂等跳过；锚点消失且无 marker = vendor 源码变了
+// → 必须失败显式报出，绝不静默跳过（静默 = 修复悄悄丢失）。
+function applyTuziMarkHtml2CanvasPatch() {
+  const dest = path.join(LIB, 'html2canvas.min.js');
+  let code = fs.readFileSync(dest, 'utf8');
+  const patches = [
+    {
+      name: '被替换元素伪元素插入守卫（导出长图 EOF 崩溃修复）',
+      marker: 'n&&!(_B(A)||tn(A)||en(A)||An(A))&&r.insertBefore(n,r.firstChild)',
+      from: 'n&&r.insertBefore(n,r.firstChild);s=this.resolvePseudoContent(A,r,s,gn.AFTER);return s&&r.appendChild(s),',
+      to: 'n&&!(_B(A)||tn(A)||en(A)||An(A))&&r.insertBefore(n,r.firstChild);s=this.resolvePseudoContent(A,r,s,gn.AFTER);return s&&!(_B(A)||tn(A)||en(A)||An(A))&&r.appendChild(s),',
+    },
+    {
+      // 文件头加本地补丁注记（后人读到文件即知其已被本地补丁，升级须重验锚点）
+      name: '文件头本地补丁注记',
+      marker: '本地补丁（2026-10-22',
+      from: ' * Released under MIT License\n */',
+      to: ' * Released under MIT License\n *\n * 本地补丁（2026-10-22，导出长图「Error parsing CSS component value,\n * unexpected EOF」修复）：根因见 scripts/ensure-vendor.mjs 中\n * applyTuziMarkHtml2CanvasPatch 的注释。本文件由 ensure-vendor 从\n * node_modules 再生，补丁在再生后自动重打；升级 html2canvas 须核对该函数\n * 锚点（失败 exit 1，不会静默跳过）。\n */',
+    },
+  ];
+  let bad = 0;
+  for (const p of patches) {
+    if (code.indexOf(p.marker) !== -1) {
+      console.log('[ensure-vendor] html2canvas 补丁已在（幂等跳过）：' + p.name);
+      continue;
+    }
+    if (code.indexOf(p.from) === -1) {
+      console.error(`[ensure-vendor] html2canvas 补丁锚点未找到：${p.name}（vendor 源码已变化，须更新补丁；拒绝继续以免修复静默丢失）`);
+      bad++;
+      continue;
+    }
+    code = code.replace(p.from, p.to);
+    console.log('[ensure-vendor] html2canvas 补丁已应用：' + p.name);
+  }
+  fs.writeFileSync(dest, code);
+  if (bad > 0) {
+    console.error(`[ensure-vendor] ${bad} 个 html2canvas 补丁未应用，vendor 不完整`);
+    process.exit(1);
+  }
+}
+
+applyTuziMarkHtml2CanvasPatch();
+
+// TuziMark CM5 本地补丁（2026-10-21 WYSIWYG「输入文字页面乱跳」修复）：
+// codemirror.js 是从 node_modules 确定性再生的 vendor 副本（src/lib/codemirror/ 在
+// .gitignore 内、不进 git），下列两处修复只存在于该文件——每次复制后必须在此重新打，
+// 否则下一次 npm install / npm ci 会抹掉修复、乱跳/跳顶静默复发。
+// 口径：严格字符串替换。已含 marker = 幂等跳过；锚点消失且无 marker = vendor 源码
+// 变了（CM 升级等）→ 必须失败显式报出，绝不静默跳过（静默 = 修复悄悄丢失）。
+function applyTuziMarkCm5Patches() {
+  const dest = path.join(LIB, 'codemirror', 'codemirror.js');
+  let code = fs.readFileSync(dest, 'utf8');
+  const patches = [
+    {
+      // 已渲染行保留实测行高：WYSIWYG 遮罩是行内 markText(replacedWith)，估算式
+      // widgetsHeight+文本行高会把 2600px TOC 遮罩行/340px 图片行重置回 ~15px，
+      // lineWrapping 下每次 refresh 都跑本函数 → 操作末 mustScroll 单跳数千 px 跳顶。
+      name: 'estimateLineHeights 跳过已渲染行（WYSIWYG 遮罩行保留实测行高）',
+      marker: 'if (rendered.has(line)) return;',
+      from: 'function estimateLineHeights(cm) {\n    var doc = cm.doc, est = estimateHeight(cm);\n    doc.iter(function (line) {\n      var estHeight = est(line);\n      if (estHeight != line.height) { updateLineHeight(line, estHeight); }\n    });\n  }',
+      to: 'function estimateLineHeights(cm) {\n    var doc = cm.doc, est = estimateHeight(cm);\n    // TuziMark 补丁（2026-10-21 WYSIWYG 不跳顶）：已渲染（display.view 在视口内）的行保留实测行高，\n    // 不做启发式估算——WYSIWYG 遮罩是行内 markText(replacedWith) 节点（非 line.widgets），估算式\n    // 会把 TOC 大遮罩行/图片行重置回单行高，lineWrapping 下每次 refresh 重估 → 操作末\n    // updateHeightsInViewport 按「实测 − 被重置记录值」补偿 scroller.scrollTop，单跳可达数千 px。\n    // 未渲染行照旧估算（滚动条预估所需，原语义不变）。\n    var view = cm.display.view, rendered = new WeakSet();\n    for (var i = 0; i < view.length; i++) {\n      var vl = view[i] && view[i].line;\n      if (vl) rendered.add(vl);\n    }\n    doc.iter(function (line) {\n      if (rendered.has(line)) return;\n      var estHeight = est(line);\n      if (estHeight != line.height) { updateLineHeight(line, estHeight); }\n    });\n  }',
+    },
+    {
+      // refresh 以真实滚动重同步：原生滚动锚定在 CM 操作之外移动真实滚动条，
+      // doc.scrollTop 只在操作末同步；按陈旧 doc 值做 pending 重断言会把已修正
+      // 位置改回，上层 delta 补偿再二次计入（实测 2570 vs 3161 → 1182px 过冲）。
+      name: 'refresh() 首句以真实 scroller 滚动同步 doc.scrollTop',
+      marker: 'if (this.display.wrapper.offsetHeight) { this.doc.scrollTop = this.display.scroller.scrollTop; }',
+      from: 'refresh: methodOp(function() {\n        var oldHeight = this.display.cachedTextHeight;\n        regChange(this);',
+      to: 'refresh: methodOp(function() {\n        var oldHeight = this.display.cachedTextHeight;\n        // TuziMark 补丁（2026-10-21 WYSIWYG 不跳顶）：浏览器原生滚动锚定会在视口上方内容高度变化时\n        // （遮罩占位缩放等，CM 操作之外）移动真实滚动条，而 doc.scrollTop 只在操作结束才同步；\n        // 按陈旧 doc 值做 pending 重断言会把已被修正的实际位置改回，上层 delta 补偿再二次计入\n        // （harness 实测 TOC 占位窗口内真实滚动 3161 vs doc.scrollTop 2570，最终 1182px 过冲）。\n        // 与 endOperation_finish 的同步方向一致：以真实当前滚动为准。\n        if (this.display.wrapper.offsetHeight) { this.doc.scrollTop = this.display.scroller.scrollTop; }\n        regChange(this);',
+    },
+  ];
+  let bad = 0;
+  for (const p of patches) {
+    if (code.indexOf(p.marker) !== -1) {
+      console.log('[ensure-vendor] CM5 补丁已在（幂等跳过）：' + p.name);
+      continue;
+    }
+    if (code.indexOf(p.from) === -1) {
+      console.error(`[ensure-vendor] CM5 补丁锚点未找到：${p.name}（vendor 源码已变化，须更新补丁；拒绝继续以免修复静默丢失）`);
+      bad++;
+      continue;
+    }
+    code = code.replace(p.from, p.to);
+    console.log('[ensure-vendor] CM5 补丁已应用：' + p.name);
+  }
+  fs.writeFileSync(dest, code);
+  if (bad > 0) {
+    console.error(`[ensure-vendor] ${bad} 个 CM5 补丁未应用，vendor 不完整`);
+    process.exit(1);
+  }
+}
+
+applyTuziMarkCm5Patches();
+
+// TuziMark continuelist addon 本地补丁（2026-10-28 用户要求：空嵌套引用行回车逐级退出；
+// 2026-10-25 补充：块中间的空引用行回车 = 续行，不得跳出——否则引用块从中间断成两块）：
+// addon/edit/continuelist.js 同样由本脚本从 node_modules 再生（不进 git），修复只存在于
+// 再生后打的补丁里——口径与 applyTuziMarkCm5Patches 一致：marker 幂等跳过；锚点消失且无
+// marker = vendor 源码变了（CM 升级等）→ 失败显式报出，绝不静默跳过。
+// 行为：emptyListRE（空行项）出口——
+//   ① 块中间（下一行仍是引用行）：与普通行同口径续行（replacements = 换行 + 同前缀），
+//      块不断开、引用照常延续（用户反馈：块中间空 > 行回车会把引用块断成两个）；
+//   ② 块尾（下一行不再是引用行）：lvl≥2 逐级弹（lvl-N → lvl-N-1，光标留本行、落新前缀
+//      之后可直接敲上级内容）；仅空 lvl-1 行完全跳出（清行 + 光标落下方新行 = 原行为）。
+//   空列表项（前缀无 >，quoteLvl=0）走原分支不受影响。
+function applyTuziMarkContinuelistPatch() {
+  const dest = path.join(LIB, 'codemirror', 'addon', 'edit', 'continuelist.js');
+  let code = fs.readFileSync(dest, 'utf8');
+  const patches = [
+    {
+      name: '空嵌套引用行回车：块中间续行 / 块尾逐级退出',
+      marker: 'var quoteLvl = (match[2].match(/>/g) || []).length;',
+      from: `        if (endOfQuote || endOfList) cm.replaceRange("", {
+          line: pos.line, ch: 0
+        }, {
+          line: pos.line, ch: pos.ch + 1
+        });
+        replacements[i] = "\\n";`,
+      to: `        if (endOfQuote || endOfList) {
+          // 2026-10-25 用户反馈：块中间的空引用行（下一行仍是引用行）回车 = 续行——
+          // 与普通引用行同一口径（换行 + 同前缀），块不断开。只看紧邻下一行是否引用行
+          // （块中间隔空行的 "> 下文" 本就是两个独立块，不在保护范围）。
+          // 2026-10-25 追加（用户反馈「块尾回车跳不出引用块、下面闪出一串 > 又消失」）：
+          // 若光标行之下直到块尾的全部引用行都是空引用行，视觉上光标就站在块尾——但紧邻
+          // 下一行是空 > 会让「续行」口径永远命中：每轮回车在光标下方插一条新 > 行（被
+          // WYSIWYG 底部遮罩吞掉不可见），下一行永远是引用行 → 续行死循环、永远跳不出。
+          // 故先扫光标行之下的引用行：全是空 > → 按块尾口径跳出，并把这批不可见的续行
+          // 垃圾一并删掉（留着块底多一排空行，跳出后脱离遮罩又变成裸露源码）；只要其中
+          // 有一条带内容的引用行，就仍是真「块中间」，维持续行口径不拆块。
+          var nextLine = cm.getLine(pos.line + 1);
+          var inQuoteMiddle = typeof nextLine === "string" && /^\\s*>/.test(nextLine);
+          if (inQuoteMiddle) {
+            var onlyEmptyBelow = true;
+            var blockEnd = pos.line;
+            for (var ln = pos.line + 1; ; ln++) {
+              var ql = cm.getLine(ln);
+              if (typeof ql !== "string" || !/^\\s*>/.test(ql)) break;
+              blockEnd = ln;
+              if (ql.replace(/^\\s*>[> \\t]*/, "").trim() !== "") { onlyEmptyBelow = false; break; }
+            }
+            if (onlyEmptyBelow) {
+              if (blockEnd > pos.line) {
+                cm.replaceRange("", { line: pos.line + 1, ch: 0 }, { line: blockEnd + 1, ch: 0 });
+              }
+              inQuoteMiddle = false;
+            } else {
+              replacements[i] = "\\n" + match[1] + match[2] + match[5];
+            }
+          }
+          if (!inQuoteMiddle) {
+          // 2026-10-28 用户要求：空嵌套引用行回车 = 逐级退出（lvl-N → lvl-N-1，光标留在
+          // 本行、落在新前缀之后可直接敲上级内容）；仅无上级（空 lvl-1 行）才完全跳出
+          // 引用（原行为：清行、光标落下方新行）。原实现空引用行一次删光全部 > 直接跳出
+          // 所有引用层级（嵌套引用只能手动删 > 逐层出）。match[2] = 完整引用前缀
+          // （"> " × N，可带尾空格）；空列表项不含 >（quoteLvl=0）→ 走原行为不动。
+          var quoteLvl = (match[2].match(/>/g) || []).length;
+          if (quoteLvl >= 2) {
+            var newPrefix = "";
+            for (var k = 0; k < quoteLvl - 1; k++) newPrefix += "> ";
+            cm.replaceRange(newPrefix, {
+              line: pos.line, ch: 0
+            }, {
+              line: pos.line, ch: pos.ch + 1
+            });
+            replacements[i] = "";  // 不另插新行：光标停在弹级后的本行
+          } else {
+            cm.replaceRange("", {
+              line: pos.line, ch: 0
+            }, {
+              line: pos.line, ch: pos.ch + 1
+            });
+            replacements[i] = "\\n";
+          }
+          }
+        } else {
+          replacements[i] = "\\n";
+        }`,
+    },
+  ];
+  let bad = 0;
+  for (const p of patches) {
+    if (code.indexOf(p.marker) !== -1) {
+      console.log('[ensure-vendor] continuelist 补丁已在（幂等跳过）：' + p.name);
+      continue;
+    }
+    if (code.indexOf(p.from) === -1) {
+      console.error(`[ensure-vendor] continuelist 补丁锚点未找到：${p.name}（vendor 源码已变化，须更新补丁；拒绝继续以免修复静默丢失）`);
+      bad++;
+      continue;
+    }
+    code = code.replace(p.from, p.to);
+    console.log('[ensure-vendor] continuelist 补丁已应用：' + p.name);
+  }
+  fs.writeFileSync(dest, code);
+  if (bad > 0) {
+    console.error(`[ensure-vendor] ${bad} 个 continuelist 补丁未应用，vendor 不完整`);
+    process.exit(1);
+  }
+}
+
+applyTuziMarkContinuelistPatch();
+
 console.log('[ensure-vendor] vendor 同步完成：src/lib（codemirror/katex/mermaid/html2canvas/markdown-it/highlight.js）');

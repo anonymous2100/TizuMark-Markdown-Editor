@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Yoong Hor Meng
 //
-// TizuMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
+// TuziMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
 // Copyright (c) 2026 The md2 authors，上游许可全文见
 // test/fixtures/md2-golden/LICENSE）。
 // 本仓库整体以 GPL-3.0 分发（见根目录 LICENSE）；上面的 MIT 标识说明的是
-// 本文件自身的许可，不改变 TizuMark 的整体许可。
+// 本文件自身的许可，不改变 TuziMark 的整体许可。
 // md2 一致性门禁（硬门禁）：网格夹具必须与 md2 的 .html 快照结构等价。
 //
 // 「结构等价」= 归一化后的表格骨架、colspan/rowspan、covered 省略、
@@ -43,7 +43,7 @@ for (const name of GRID_FIXTURES) {
     assert.strictEqual(
       ours.length,
       theirs.length,
-      `表格数量不一致：TizuMark ${ours.length}，md2 ${theirs.length}`
+      `表格数量不一致：TuziMark ${ours.length}，md2 ${theirs.length}`
     );
     assert.deepStrictEqual(ours, theirs);
   });

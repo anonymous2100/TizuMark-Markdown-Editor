@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Yoong Hor Meng
 //
-// TizuMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
+// TuziMark 的 md2 表格子系统（移植/衍生自 md2，MIT 许可，
 // Copyright (c) 2026 The md2 authors，上游许可全文见
 // test/fixtures/md2-golden/LICENSE）。
 // 本仓库整体以 GPL-3.0 分发（见根目录 LICENSE）；上面的 MIT 标识说明的是
-// 本文件自身的许可，不改变 TizuMark 的整体许可。
+// 本文件自身的许可，不改变 TuziMark 的整体许可。
 // md2 表格 AST（对应 md2 仓库 crates/md2-core/src/ast.rs 的表部分）。
 //
 // 全网格表示（md2 ast.rs:7-20 的设计）：每行恰好 columnCount 个 cell，
@@ -14,7 +14,7 @@
 //   - covered：矩形内其余位置，covered=true、内容为空、colspan=rowspan=1
 //
 // 与 Rust 版本的差异：content 保存**原始字符串**而非已解析的块。
-// md2 用 pulldown-cmark 解析单元格内容；TizuMark 把这一步交给注入的
+// md2 用 pulldown-cmark 解析单元格内容；TuziMark 把这一步交给注入的
 // 渲染回调（见 html.js），从而让单元格内容回灌 unified 管线获得完整
 // CommonMark（含 KaTeX / Mermaid / 脚注等既有后处理）。
 'use strict';

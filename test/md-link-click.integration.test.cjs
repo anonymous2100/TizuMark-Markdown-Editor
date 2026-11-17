@@ -38,7 +38,7 @@ test('相对 .md 链接点击：使用 resolveDocPath + read_file，且不触发
     fetchCalls++;
     return {
       ok: true,
-      text: async () => '<!DOCTYPE html><html><head><title>TizuMark</title></head><body>INDEX_HTML</body></html>',
+      text: async () => '<!DOCTYPE html><html><head><title>TuziMark</title></head><body>INDEX_HTML</body></html>',
     };
   };
 

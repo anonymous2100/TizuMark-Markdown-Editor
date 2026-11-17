@@ -115,6 +115,7 @@
         setRowLabel('set-tab-size', t('tabSize'));
         setRowLabel('set-line-wrap', t('lineWrap'));
         setRowLabel('set-line-numbers', t('lineNumbers'));
+        setRowLabel('set-code-folding', t('codeFolding'));
         setRowLabel('set-preview-font-size', t('previewFontSize'));
         setRowLabel('set-line-height', t('lineHeight'));
         // 编辑器 / 预览 分组的标题条用各自分组内稳定控件锚定（字号滑块已移入「自定义字体」分组，
@@ -214,8 +215,9 @@
         this.updateOutline();
   
         // Toolbar / panel title attributes（2026-08-04 i18n 补漏）
-        setTitle('folder-float-btn', t('toggleFolderPanel'));
-        setTitle('sidebar-float-btn', t('toggleOutlinePanel'));
+        setTitle('sidebar-float-btn', t('toggleSidebar'));
+        setTitle('sidebar-tab-outline', t('outline'));
+        setTitle('sidebar-tab-files', t('folder'));
         setTitle('btn-reload', t('reloadFile'));
         setTitle('btn-theme', t('toggleTheme'));
         setTitle('fmt-collapse', t('collapseExpandToolbar'));
@@ -224,7 +226,6 @@
         setTitle('folder-up', t('folderUp'));
         setTitle('files-header-open', t('openWorkspaceFolderTitle'));
         setTitle('folder-path', t('openContainingFolder'));
-        setTitle('outline-header-title', t('outline'));
         // 文件目录排序下拉文案随语言刷新由 _folderSortSelect.applyI18n 统一处理（见下方 SETTINGS DROPDOWN OPTIONS）
         this.updateFolderSortOrderButton();
         this.updateFolderMenuLabel();
@@ -533,6 +534,8 @@
         if (this._outlineFilterSelect) this._outlineFilterSelect.applyI18n(t);
         // 自定义字体区（空状态 + 编辑/预览字体下拉的「跟随方案」）随语言刷新
         this.renderCustomFontSettings();
+        // 空态欢迎页文案用 t() 动态取，切语言时重新渲染（若当前有文档则只是幂等显隐）
+        if (this._applyEmptyState) this._applyEmptyState();
       },
   };
 
