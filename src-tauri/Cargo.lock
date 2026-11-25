@@ -4778,38 +4778,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
-name = "tuzimark"
-version = "1.2.7"
-dependencies = [
- "base64 0.22.1",
- "dirs",
- "encoding_rs",
- "fontdb",
- "futures-util",
- "imagesize",
- "lopdf",
- "md-5",
- "minisign-verify",
- "notify",
- "regex",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-shell",
- "tauri-plugin-single-instance",
- "tauri-plugin-updater",
- "tauri-plugin-window-state",
- "webview2-com",
- "windows",
- "winreg 0.52.0",
-]
-
-[[package]]
 name = "tokio"
 version = "1.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5079,6 +5047,38 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "tuzimark"
+version = "1.2.7"
+dependencies = [
+ "base64 0.22.1",
+ "dirs",
+ "encoding_rs",
+ "fontdb",
+ "futures-util",
+ "imagesize",
+ "lopdf",
+ "md-5",
+ "minisign-verify",
+ "notify",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-updater",
+ "tauri-plugin-window-state",
+ "webview2-com",
+ "windows",
+ "winreg 0.52.0",
+]
 
 [[package]]
 name = "typeid"
