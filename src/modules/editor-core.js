@@ -3,7 +3,9 @@
 // 因此方法内的 this 仍指向编辑器实例，模块之间可继续用 this.xxx() 互调。
 (function () {
   'use strict';
-  const { Tab } = TMConst;
+  const { Tab, MD_MODE_CFG } = TMConst;
+  // MD_MODE_CFG（markdown 基础 mode 配置，含行内格式 token 中和）定义在 constants.js、
+  // 走 TMConst 命名空间共享：editor-core 构造实例与 files.js 打开 .md 必须共用同一对象。
 
   const mixin = {
       // 上下移动当前行/选中行块（CM5 核心无 moveLineUp/Down 命令，自实现，合并自 PR #36）。
@@ -164,7 +166,20 @@
           // text-decoration:underline 在编辑态漏出；而渲染器（remark）根本不把这些
           // 识别成链接 → 编辑/渲染不一致。普通 URL 的 cm-link（urlRE 分支）不受影响，
           // 渲染态本来就有下划线，保持原样。
-          mode: { name: 'gfm', gitHubSpice: false },
+          // 行内格式 token 中和（2026-11-15 用户要求：编辑器只显示源码，不显示粗体/斜体/
+          // 删除线/行内代码这些基础文本格式的格式化外观）：gfm 模式原生把 **bold** 发
+          // cm-strong（codemirror.css 加粗）、*em* 发 cm-em（斜体）、~~del~~ 发
+          // cm-strikethrough（删除线）、`code` 发 cm-comment（#a50 灰）——编辑态与
+          // 「只显示源码」口径相悖。tokenTypeOverrides 把这四类行内 token 全部改发
+          // cm-plain（无任何 CSS 规则 → 纯文本外观）。其中 codeInline 是 vendor 补丁
+          // （ensure-vendor.mjs applyTuziMarkMarkdownModePatch）在 getType 行内分支
+          // 新增的独立键：行内代码单独改写，缩进代码块/无高亮围栏体仍走 code(comment)。
+          // 标题 cm-header / 引用 cm-quote / 链接 cm-link / 围栏内部语言高亮不受影响。
+          // 高亮 ==..== 模式本就不发 token，编辑态恒为源码。gfm.js 会把 modeConfig
+          // 属性透传给 markdown 模式（markdownConfig[attr] = modeConfig[attr]）。
+          // 配置本体 = TMConst.MD_MODE_CFG（定义在 constants.js），files.js 打开 .md
+          // 文件时复用同一对象，不得用裸 'gfm' 字符串覆盖。
+          mode: MD_MODE_CFG,
           theme: 'default',
           inputStyle: 'contenteditable',
           lineNumbers: true,

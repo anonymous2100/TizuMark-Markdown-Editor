@@ -872,8 +872,8 @@ test('列表/代码块活动行渲染化 CSS：源符号透明化 + ::before 渲
     '复选框未锚定槽左缘 left:0（左漂根因是旧 -2ch 随字体度量变）');
   assert.match(css, /\.wysiwyg-task-prefix::before[\s\S]{0,400}width: 16px;[\s\S]{0,120}height: 16px;/,
     '复选框尺寸未固定 16px（与渲染 input[checkbox] 一致）');
-  assert.match(css, /wysiwyg-task-prefix::before[\s\S]{0,300}border: 1\.5px solid var\(--border-color\);/,
-    '复选框未对齐预览样式（1.5px 边框）');
+  assert.match(css, /wysiwyg-task-prefix::before[\s\S]{0,300}border: 1\.5px solid var\(--text-secondary\);/,
+    '复选框未对齐预览样式（1.5px 边框；issue #100 起边框用 --text-secondary 保暗色可见性）');
   assert.match(css, /wysiwyg-task-prefix\.checked::before[\s\S]{0,150}--color-success/, '勾选态未用主题成功色');
   assert.match(css,
     /wysiwyg-task-prefix\.checked::after[\s\S]{0,600}border-width: 0 2px 2px 0;[\s\S]{0,40}transform: rotate\(45deg\);/,
@@ -925,8 +925,12 @@ test('列表/代码块活动行渲染化 CSS：源符号透明化 + ::before 渲
   // gfm 模式 gitHubSpice 把 7–40 位十六进制串认成 SHA → cm-link token →
   // codemirror.css .cm-link { text-decoration: underline } 在编辑态漏出；渲染器不识别
   // → 不一致。必须关 gitHubSpice（普通 URL 的 cm-link 走 urlRE 分支，渲染态本有下划线，保留）。
+  // 2026-11-17：mode 配置本体已收编进 constants.js（TMConst.MD_MODE_CFG，check-globals
+  // 单全局口径），gitHubSpice 断言随迁；editor-core 经解构复用同一对象。
   const ecore = fs.readFileSync(path.join(ROOT, 'src', 'modules', 'editor-core.js'), 'utf8');
-  assert.match(ecore, /gitHubSpice:\s*false/, 'gfm 模式未关 gitHubSpice（SHA/issue 串被认成链接，编辑态漏下划线）');
+  const cconst = fs.readFileSync(path.join(ROOT, 'src', 'modules', 'constants.js'), 'utf8');
+  assert.match(cconst, /gitHubSpice:\s*false/, 'gfm 模式未关 gitHubSpice（SHA/issue 串被认成链接，编辑态漏下划线）');
+  assert.match(ecore, /const \{ Tab, MD_MODE_CFG \} = TMConst;/, 'editor-core 未从 TMConst 复用 MD_MODE_CFG');
   // token 的 text-decoration 也要中和（.cm-link 下划线 / .cm-strikethrough 删除线漏出）；
   // 渲染态链接口径 = .preview-content a { text-decoration:none } → 编辑态 cm-link 无下划线
   assert.match(css, /wysiwyg-plain-text span\[class[*]="cm-"\] \{[\s\S]{0,800}text-decoration: none;/,
@@ -1437,7 +1441,7 @@ test('公式 guard：反斜杠转义 + 反引号状态行局部（demo.md L963 \
     }
     assert.fail('提取失败（花括号失衡）: ' + name);
   }
-  const fns = ['looksLikeMath', 'looksLikeLatexMath', 'isAtBlockStart', 'escapeHTML', 'guardMathBlocks'].map(extractFn).join('\n');
+  const fns = ['looksLikeMath', 'looksLikeLatexMath', 'isAtBlockStart', 'escapeHTML', 'inlineMathPlaceholder', 'guardMathBlocks'].map(extractFn).join('\n');
   const guard = new Function(fns + '\nreturn guardMathBlocks;')();
   // 最小复现（demo.md L963 转义表行 + 其后反引号内 $...$）：
   const repro = '| 转义写法 | 显示效果 |\n| --- | --- |\n| ``\\` `` | \\` 字面反引号 |\n\n除 `$...$` 行内公式外。';
@@ -2105,14 +2109,14 @@ test('表格行/列操作（2026-10-13 用户要求）：hover 增行/增列 + �
     '行轨道未覆盖左 gutter 带（left:-24px 宽 24px = 常驻命中区，与列轨同宽；上下界随 wrap 留白 24px）');
   const rgIdx = css.indexOf('.wysiwyg-table-row-grip');
   assert.ok(rgIdx > 0, '缺行握点规则（.wysiwyg-table-row-grip，轨道内可见小把手）');
-  assert.match(css.slice(rgIdx, rgIdx + 400), /color: var\(--text-tertiary/, '行握点悬停态非中性灰点阵');
+  assert.match(css.slice(rgIdx, rgIdx + 400), /color: var\(--text-secondary/, '行握点悬停态非中性灰点阵（issue #100 起用 text-secondary 提对比）');
   const pillIdx2 = css.indexOf('.wysiwyg-table-col-pill');
   assert.ok(pillIdx2 > 0, '缺列轨道元素规则（.wysiwyg-table-col-pill，wrap 上常驻真实元素）');
   assert.match(css.slice(pillIdx2, pillIdx2 + 300), /top: 0;[\s\S]{0,160}height: 24px;/,
     '列轨道未覆盖顶 gutter 带（top:0 高 24px = wrap 上留白区，底边贴表顶，不再伸到行外）');
   const cgIdx = css.indexOf('.wysiwyg-table-col-grip');
   assert.ok(cgIdx > 0, '缺列握点规则（.wysiwyg-table-col-grip，轨道内可见小把手）');
-  assert.match(css.slice(cgIdx, cgIdx + 450), /color: var\(--text-tertiary/, '列握点悬停态非中性灰点阵');
+  assert.match(css.slice(cgIdx, cgIdx + 450), /color: var\(--text-secondary/, '列握点悬停态非中性灰点阵（issue #100 起用 text-secondary 提对比）');
   // 悬停不高亮：wysiwyg-row-hover / wysiwyg-col-hover 只作状态类，不得再有底色规则；
   // 阅读模式的行 hover 高亮（.preview-content tbody tr:hover）在遮罩上必须豁免
   assert.ok(css.indexOf('tr.wysiwyg-row-hover {') < 0, '悬停行高亮规则未移除（用户第 6 条：只有拖动才高亮）');
@@ -2769,11 +2773,12 @@ test('不跳顶修复⑤（2026-10-21）：ensure-vendor 再生 vendor 后重打
   const vendor = fs.readFileSync(path.join(ROOT, 'scripts', 'ensure-vendor.mjs'), 'utf8');
   assert.match(vendor, /function applyTuziMarkCm5Patches\(\) \{/,
     'ensure-vendor 缺 CM5 补丁重打步骤（vendor 再生会抹掉不跳顶修复）');
-  // 补丁调用顺序：CM5 核心 → continuelist addon → vendor 同步完成（2026-10-28 新增 continuelist
-  // 逐级退出补丁，须同在同步完成前重打，否则 npm install 抹掉修复；窗口 8000 = 补丁体含
-  // 块尾跳出逻辑后已逾 4000，S106 曾撑爆）
-  assert.match(vendor, /applyTuziMarkCm5Patches\(\);[\s\S]{0,8000}?applyTuziMarkContinuelistPatch\(\);\s*\n\s*console\.log\('\[ensure-vendor\] vendor 同步完成/,
-    'ensure-vendor 的 CM5/continuelist 补丁步骤未在 vendor 同步完成前调用');
+  // 补丁调用顺序：CM5 核心 → continuelist addon → markdown 模式 → vendor 同步完成
+  // （2026-10-28 新增 continuelist 逐级退出补丁，须同在同步完成前重打，否则 npm install
+  // 抹掉修复；2026-11-15 新增 markdown 模式补丁——恰好 2 波浪删除线守卫 + 行内代码
+  // 独立 token。窗口 8000 = 补丁体含块尾跳出逻辑后已逾 4000，S106 曾撑爆）
+  assert.match(vendor, /applyTuziMarkCm5Patches\(\);[\s\S]{0,8000}?applyTuziMarkContinuelistPatch\(\);[\s\S]{0,8000}?applyTuziMarkMarkdownModePatch\(\);\s*\n\s*console\.log\('\[ensure-vendor\] vendor 同步完成/,
+    'ensure-vendor 的 CM5/continuelist/markdown 补丁步骤未在 vendor 同步完成前调用');
   // 两个补丁项的幂等 marker（已打则跳过；锚点丢失则 exit 1，绝不静默）
   assert.match(vendor, /marker: 'if \(rendered\.has\(line\)\) return;'/,
     'ensure-vendor CM5 补丁项一（estimateLineHeights 跳过已渲染行）缺 marker');
@@ -2931,11 +2936,11 @@ test('S74 代码块编辑态语法色重映射到 GitHub hljs 色板（≡ 渲�
   // 规则必须带 wysiwyg-code-line 限定，经典编辑模式 token 色不动
   const scope = '.editor-container.wysiwyg-mode .CodeMirror pre.CodeMirror-line.wysiwyg-code-line';
   // 亮态 = github.min.css 色板（实测值）
-  assert.ok(css.includes(scope + ' span.cm-keyword { color: #d73a49; }'), '亮态 keyword 色不是 GitHub 色板红（#d73a49 ≡ .hljs-keyword）');
+  assert.ok(css.includes(scope + ' span.cm-keyword { color: #cf222e; }'), '亮态 keyword 色不是 GitHub 新色板红（#cf222e ≡ .hljs-keyword；issue #100 旧 #d73a49 仅 4.19:1）');
   assert.match(css, /span\.cm-def,[\s\S]{0,200}?span\.cm-property \{ color: #6f42c1; \}/, 'def/property 组色不是 GitHub 色板紫（#6f42c1 ≡ .hljs-title.function_）');
   assert.match(css, /span\.cm-number,[\s\S]{0,600}?span\.cm-type \{ color: #005cc5; \}/, 'number/atom/meta/attr/variable-3/type 组色不是 GitHub 色板蓝（#005cc5）');
   assert.match(css, /span\.cm-string,[\s\S]{0,200}?span\.cm-string-2 \{ color: #032f62; \}/, 'string 组色不是 GitHub 色板深蓝（#032f62 ≡ .hljs-string）');
-  assert.ok(css.includes(scope + ' span.cm-comment:not([class*="wysiwyg-code-fence"]) { color: #6a737d; }'), '亮态 comment 色不是 #6a737d，或缺围栏标志行排除（cm-comment 与 wysiwyg-code-fence 同身会被误染）');
+  assert.ok(css.includes(scope + ' span.cm-comment:not([class*="wysiwyg-code-fence"]) { color: #57606a; }'), '亮态 comment 色不是 #57606a（issue #100 旧 #6a737d 仅 4.41:1），或缺围栏标志行排除（cm-comment 与 wysiwyg-code-fence 同身会被误染）');
   assert.ok(css.includes(scope + ' { color: #24292e; }'), '缺亮态基色 #24292e（≡ .hljs 基色，无 token 色文本须同色）');
   // 暗态 = github-dark.min.css 色板
   const dscope = '[data-theme="dark"] ' + scope;

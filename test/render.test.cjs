@@ -148,3 +148,71 @@ test('render: 明文 javascript: 链接被拦截', async () => {
   const html = render('<a href="javascript:alert(1)">x</a>');
   assert.ok(!html.includes('javascript:'), '明文 javascript: 必须被拦截');
 });
+
+// ---- 行首行内公式的 HTML 块陷阱 ----
+// guardMathBlocks 把行首 $…$ 换成 <!--MATHBLOCK_N--> 占位注释后，CommonMark 把行首
+// HTML 注释解析为 HTML 块（type 2），整行不再做内联解析 → 该行后续的 **加粗** /
+// 斜体 / 链接全部字面化（用户 MOT 笔记实测）。占位符包 <span> 后回到段落上下文。
+test('render: 行首行内公式不吞并该行其余内联语法（HTML 块陷阱）', async () => {
+  const html = render('$4.5 / 8.33 = 0.54$，雷达在**加粗**——测试', { softBreaks: false });
+  assert.ok(/<strong[\s>]/.test(html), '行首公式之后的 **加粗** 必须正常渲染');
+  assert.ok(html.includes('<p'), '该行应渲染为段落而非 HTML 块');
+  assert.ok(html.includes('$4.5 / 8.33 = 0.54$'), '公式须还原为公式文本（交给 KaTeX 渲染）');
+  // span 包裹只服务于 remark 解析阶段，restore 时须剥掉（最终输出与历史版本一致）
+  assert.ok(!/<span>\$4\.5 \/ 8\.33 = 0\.54\$<\/span>/.test(html), '还原后不应残留包裹 span');
+});
+
+test('render: 行内公式在行中时行为不变（还原输出与历史版本逐字节一致）', async () => {
+  const html = render('前文 $x=1$，雷达在**加粗**——测试', { softBreaks: false });
+  assert.ok(/<strong[\s>]/.test(html), '行中公式的粗体应正常渲染');
+  assert.ok(html.includes('$x=1$'), '公式须还原为公式文本');
+  assert.ok(!/<span>\$x=1\$<\/span>/.test(html), '行中公式还原后同样不应残留包裹 span');
+});
+
+test('render: 列表项内行首行内公式同样不吞内联语法', async () => {
+  const html = render('- $x=1$ 列表内**加粗**', { softBreaks: false });
+  assert.ok(/<li[\s>]/.test(html), '应渲染为列表项');
+  assert.ok(/<strong[\s>]/.test(html), '列表项内行首公式后的粗体必须正常渲染');
+});
+
+// ---- 标题 id 一致性：预览侧（unified 管线）必须与大纲侧（extractHeadings）同源 ----
+// 背景：标题含行内公式时，公式在管线前被 guardMathBlocks 换成 <!--MATHBLOCK_N--> 占位注释，
+// 若 slug 计算丢弃注释内容，预览 id 会缺失公式文本（标题-尾 ≠ 大纲的 标题-emc2-尾），
+// 点击大纲 querySelector('#id') 落空 → 预览跳转失败。
+const Outline = require('../src/modules/outline.js');
+// 复刻 app.js/layout.js 的 headingToId（与 outline.test.cjs 同一套）
+function headingToId(text) {
+  let id = '';
+  for (const ch of text) {
+    if (/[\p{L}\p{N}]/u.test(ch)) id += ch.toLowerCase();
+    else if (ch === ' ' || ch === '-' || ch === '_') id += '-';
+  }
+  return id.replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
+test('render: 标题含行内公式时 heading id 与大纲侧一致', async () => {
+  const md = '## 标题 $E=mc^2$ 尾\n\n正文';
+  const h2 = new JSDOM(render(md)).window.document.querySelector('h2');
+  const outlineId = Outline.extractHeadings(md, { headingToId })[0].id;
+  assert.strictEqual(h2.id, outlineId, `预览 id(${h2.id}) 必须与大纲 id(${outlineId}) 一致，否则大纲点击跳转失败`);
+  assert.strictEqual(h2.id, '标题-emc2-尾');
+});
+
+test('render: 纯公式标题的 heading id 与大纲侧一致', async () => {
+  const md = '## $E=mc^2$';
+  const h2 = new JSDOM(render(md)).window.document.querySelector('h2');
+  const outlineId = Outline.extractHeadings(md, { headingToId })[0].id;
+  assert.strictEqual(h2.id, outlineId, `预览 id(${h2.id}) 必须与大纲 id(${outlineId}) 一致`);
+  assert.strictEqual(h2.id, 'emc2');
+});
+
+test('render: 重复含公式标题的去重后缀与大纲侧一致', async () => {
+  const md = '## 标题 $E=mc^2$ 尾\n\n## 标题 $E=mc^2$ 尾\n\n## 其他 $x+1$ 题';
+  const doc = new JSDOM(render(md)).window.document;
+  const h2s = doc.querySelectorAll('h2');
+  const outlineIds = Outline.extractHeadings(md, { headingToId }).map((h) => h.id);
+  assert.strictEqual(h2s.length, 3);
+  assert.strictEqual(h2s[0].id, outlineIds[0]);
+  assert.strictEqual(h2s[1].id, outlineIds[1]);
+  assert.strictEqual(h2s[2].id, outlineIds[2]);
+});

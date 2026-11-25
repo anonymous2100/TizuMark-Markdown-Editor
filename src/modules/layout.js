@@ -80,6 +80,7 @@
       },
       initPanelHeaders() {
         const btnAllFolders = document.getElementById('btn-all-folders');
+        const btnLocateFile = document.getElementById('btn-locate-file');
         const btnAllOutline = document.getElementById('btn-all-outline');
         // 文件面板标题（左侧图标+文字）点击 = 弹出文件夹选择，选中后切换工作区
         const filesHeader = document.querySelector('.files-panel-header .panel-title-group');
@@ -112,6 +113,9 @@
             const anyExpanded = !!(treeEl && treeEl.querySelector('.tree-node.tree-folder.expanded'));
             this.toggleAllFolders(!anyExpanded);
           });
+        }
+        if (btnLocateFile) {
+          btnLocateFile.addEventListener('click', () => this.locateActiveFile());
         }
         if (btnAllOutline) {
           btnAllOutline.addEventListener('click', () => {
@@ -500,7 +504,17 @@
           escapeHtml: (t) => this.escapeHtml(t),
           maxLevel: this.settings.outlineFilterLevel || 0,
         });
-  
+
+        // 大纲标签内的行内公式 KaTeX 渲染：与预览共用同一 processMath
+        // （auto-render 扫描文本节点，$…$ / $$…$$ / \(…\) / \[…\] 同一套定界符与不成对 $ 保护）。
+        // 标签文本经 escapeHtml 后仍是纯文本；KaTeX 未加载/渲染失败时静默保持原文，
+        // 不影响大纲导航本身。
+        if (typeof RenderPost !== 'undefined' && RenderPost.processMath) {
+          try {
+            RenderPost.processMath(outlineContent);
+          } catch (_) { /* 公式渲染失败不阻断大纲 */ }
+        }
+
         // Event delegation on outline-content
         outlineContent.onclick = (e) => {
           const toggle = e.target.closest('.outline-toggle');

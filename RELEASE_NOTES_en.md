@@ -1,42 +1,43 @@
+> [!IMPORTANT]
+> **⚠️ v1.2.5 / v1.2.6 users: these two versions CANNOT update in-app (updater defect). Please download and reinstall this version manually.**
+>
+> After installing v1.2.7, in-app updates work normally again — no more manual downloads needed for future releases.
+>
+> - Gitee release page: https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/tag/v1.2.7
+> - GitHub release page: https://github.com/tizuio/TizuMark-Markdown-Editor/releases/tag/v1.2.7
+>
+> **Note**: Install over your existing setup — settings, sessions and documents are all preserved.
+
 ## ⬇️ Download
 
-> **🏆 Recommended for most users:** [⬇ TuziMark_1.2.5_x64-setup.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v1.2.5/TuziMark_1.2.5_x64-setup.exe)
+> **🏆 Recommended for most users:** [⬇ TuziMark_1.2.7_x64-setup.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v1.2.7/TuziMark_1.2.7_x64-setup.exe)
 >
-> **🛠 Enterprise / bulk deploy:** [⬇ TuziMark_1.2.5_x64_en-US.msi](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v1.2.5/TuziMark_1.2.5_x64_en-US.msi)
+> **🛠 Enterprise/bulk deployment:** [⬇ TuziMark_1.2.7_x64_en-US.msi](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v1.2.7/TuziMark_1.2.7_x64_en-US.msi)
 >
-> **📦 Portable (no install):** [⬇ TuziMark_1.2.5_x64.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v1.2.5/TuziMark_1.2.5_x64.exe)
+> **📦 Portable (no install):** [⬇ TuziMark_1.2.7_x64.exe](https://gitee.com/tizu/TizuMark-Markdown-Editor/releases/download/v1.2.7/TuziMark_1.2.7_x64.exe)
 
-### Package types
+### Package Comparison
 
-| Package | For | Notes |
-|--------|-----|-------|
-| ⭐ **NSIS installer (.exe)** — **Recommended** | Most Windows users | Classic setup wizard; custom install path, desktop shortcut, file association. |
-| **MSI installer (.msi)** | IT admins / bulk deploy | Windows Installer; group policy push, silent install (msiexec /i TuziMark_1.2.5_x64_en-US.msi /qn). |
-| **Portable (.exe)** | Portable use | Single file, no install, no registry writes. |
+| Package | Audience | Notes |
+|---------|---------|------|
+| ⭐ **NSIS installer (.exe)** — **Recommended** | Most Windows users | Traditional setup wizard: custom install path, desktop shortcut, file association. |
+| **MSI installer (.msi)** | Enterprise IT admins | Standard Windows Installer: group policy deployment, silent install (`msiexec /i TuziMark_1.2.7_x64_en-US.msi /qn`). |
+| **Portable (.exe)** | Portable-use lovers | Single file, no installation, no registry writes. |
 
 ---
 
-## ✨ v1.2.5 Changelog
+## ✨ v1.2.7 Changelog
 
-### Added
-- Live WYSIWYG preview mode: the text keeps its formatted look while only the block under the cursor shows Markdown source — write directly on the rendered page, Typora-style. Table cells edit in place with row/column drag-and-drop, task checkboxes are clickable, code blocks keep syntax highlighting; the editing state matches the rendered state pixel for pixel
-- Vertical split in edit mode: flip between side-by-side and top-bottom with one click (double-click the divider or press the button); split direction and ratio are persisted
-- Tab rename via right-click (renaming a saved file also renames it on disk)
-- File tree: "Up One Level" button on the workspace title; click the "Files" title to switch workspace via a folder picker, click the path to reveal the folder in the file manager; drag-and-drop to move files and folders
-- Updater: installer disk cache (already-downloaded setups are not downloaded twice) and "skip this version"
+### New
+
+- (none)
 
 ### Improved
-- Live preview performance: warm startup 449→374 ms, per-block pre-render 131→34 ms; structural edits now refresh incrementally
-- Export PDF: direct export (only very old WebView2 runtimes fall back to the system print dialog); the confirmation dialog matches the DOCX style; dark-theme gray background fixed
-- Editor and preview content now align at the top in both horizontal and vertical split
-- Inline math delimiter \(...\) now renders as math by default instead of degrading to literal brackets
-- Chinese IME input fixes in lists and headings
-- Split collapse controls moved into the divider; collapsed panes show an edge-docked semicircle handle
+
+- (none)
 
 ### Fixed
-- Scroll-sync offset: systematic anchor measurement drift (2–10 lines horizontally, 24–30 lines vertically) made the preview follow inaccurately
-- Split panes disappeared after maximizing/restoring the window
-- Export PDF gray ring root cause (WebView2 background color)
-- Numerous live-preview editing-state fixes (nested blockquotes, block spacing mismatching reading mode, Enter at end of document, and more)
 
-> Questions? Join QQ group: 1035294939
+- Fixed in-app "Download update" completely broken: the update check found new versions but clicking download failed instantly (the updater disk-cache feature introduced in v1.2.5 read the wrong metadata field name `rawJson`; v1.2.5 and v1.2.6 are both affected).
+
+> If you run into any issues, feel free to join our QQ group: 1035294939

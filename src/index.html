@@ -417,6 +417,9 @@
                 <span class="panel-title" data-i18n="files">文件</span>
               </span>
               <span class="header-actions">
+                <button id="btn-locate-file" class="panel-action-btn" type="button" title="定位当前文档" aria-label="定位当前文档">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
                 <button id="btn-all-folders" class="panel-action-btn" type="button" title="展开/折叠全部目录" aria-label="展开或折叠全部目录">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-6"/><path d="M12 8V2"/><path d="M4 12H2"/><path d="M10 12H8"/><path d="M16 12h-2"/><path d="M22 12h-2"/><path d="m15 19-3 3-3-3"/><path d="m15 5-3-3-3 3"/></svg>
                 </button>
@@ -600,7 +603,7 @@
           <div class="dependency-body about-version-body">
             <div class="about-app-line">
               <span class="about-app-name">TuziMark</span>
-              <span id="about-version" class="about-version-chip">TuziMark v1.2.5</span>
+              <span id="about-version" class="about-version-chip">TuziMark v1.2.7</span>
             </div>
             <p id="about-version-desc" class="about-version-desc">轻量级跨平台 Markdown 编辑器</p>
             <p id="about-build" class="about-build">基于 Tauri v2.5 + Rust 构建</p>
@@ -1127,6 +1130,10 @@
             <label class="toggle"><input type="checkbox" id="set-code-wrap"><span class="toggle-slider"></span></label>
           </div>
           <div class="settings-row">
+            <label>对齐方式</label>
+            <div id="set-preview-align"></div>
+          </div>
+          <div class="settings-row">
             <label>代码块滚动条</label>
             <label class="toggle"><input type="checkbox" id="set-code-scroll" checked><span class="toggle-slider"></span></label>
             <p class="form-hint" id="setting-code-scroll-hint">
@@ -1177,6 +1184,14 @@
           <div class="settings-row">
             <label>关闭窗口时</label>
             <div id="set-close-action"></div>
+          </div>
+          <div class="settings-row">
+            <label>导出 PDF 生成目录</label>
+            <label class="toggle"><input type="checkbox" id="set-pdf-toc-enabled"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <label>PDF 目录收录深度</label>
+            <div id="set-pdf-toc-depth"></div>
           </div>
           <div class="settings-row">
             <label>退出时关闭所有标签</label>
@@ -1433,6 +1448,8 @@
 
   <!-- 标签页右键菜单 -->
   <div id="context-menu-tab" class="context-menu hidden">
+    <div class="context-menu-item" data-action="tab-open-in-window"><span>在新窗口打开</span></div>
+    <div class="context-menu-item" data-action="tab-move-to-window"><span>移动到新窗口</span></div>
     <div class="context-menu-item" data-action="tab-close"><span>关闭</span></div>
     <div class="context-menu-item" data-action="tab-close-others"><span>关闭其他</span></div>
     <div class="context-menu-item" data-action="tab-close-all"><span>关闭所有</span></div>
@@ -1491,6 +1508,7 @@
 <script src="modules/preview-window.js"></script>
 <script src="modules/tauri-api.js"></script>
 <script src="modules/constants.js"></script>
+<script src="modules/multi-window.js"></script>
 <script src="modules/file-types.js"></script>
 <script src="modules/file-search.js"></script>
 <script src="modules/dialog-drag-resize.js"></script>

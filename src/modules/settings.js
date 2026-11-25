@@ -28,6 +28,7 @@
           codeLineNumbers: false,
           codeWrap: false,
           codeScroll: true,
+          previewAlign: 'default', // 全局对齐（issue #90 justify → 四态）：default/justify/center/right，预览/实时预览/导出统一
           softBreaks: true,
           extendedSyntax: true,
           showTrayIcon: true,
@@ -44,6 +45,11 @@
           sidebarTab: 'outline',
           // 大纲层级过滤：0=全部，1~6=仅显示到该层级
           outlineFilterLevel: 0,
+          // PDF 导出纸面目录页收录深度：3~6（h1–h3 … h1–h6），默认 6=全量收录
+          // （2026-11-17 用户确认：深目录为默认预期，Word/Typora 的 h1–h3 作为可选）
+          pdfTocMaxLevel: 6,
+          // 导出 PDF 生成目录总开关：关闭 = 无纸面目录页、无 PDF 书签、单遍导出（升级前行为）
+          pdfTocEnabled: true,
           customFonts: [],
           editorFont: '',
           previewFont: '',
@@ -81,6 +87,22 @@
               merged[k] = defaults[k];
             }
           }
+          // PDF 目录收录深度仅允许 3~6（设置面板选项集），越界数字回默认 6（全量收录）
+          if (![3, 4, 5, 6].includes(merged.pdfTocMaxLevel)) {
+            merged.pdfTocMaxLevel = defaults.pdfTocMaxLevel;
+          }
+          // previewJustify（issue #90 布尔）→ previewAlign 四态迁移（2026-11-20）：
+          // ⚠️ merged.previewAlign 恒有 defaults 兜底值，白名单检查不能兼作「是否迁移」
+          // 判据（否则旧键永远不触发）——迁移仅在存档无 previewAlign 字符串键时按旧键转换；
+          // 已存新键时走新键（非法值由上方类型校验 + 下方白名单回 default）。
+          const PREVIEW_ALIGNS = ['default', 'justify', 'center', 'right'];
+          if (!PREVIEW_ALIGNS.includes(merged.previewAlign)) {
+            merged.previewAlign = defaults.previewAlign;
+          }
+          if (!(saved && typeof saved.previewAlign === 'string')) {
+            merged.previewAlign = saved && saved.previewJustify === true ? 'justify' : defaults.previewAlign;
+          }
+          delete merged.previewJustify;
           return merged;
         } catch {
           return defaults;
@@ -149,12 +171,14 @@
         document.getElementById('set-code-line-numbers').checked = s.codeLineNumbers;
         document.getElementById('set-code-wrap').checked = s.codeWrap;
         document.getElementById('set-code-scroll').checked = s.codeScroll;
+        if (this._selects && this._selects.previewAlign) this._selects.previewAlign.setValue(s.previewAlign || 'default', true);
         if (this._selects && this._selects.language) this._selects.language.setValue(s.language || 'zh', true);
         document.getElementById('set-soft-breaks').checked = s.softBreaks !== false;
         document.getElementById('set-extended-syntax').checked = s.extendedSyntax !== false;
         document.getElementById('set-show-tray-icon').checked = s.showTrayIcon !== false;
         document.getElementById('set-show-all-files').checked = s.showAllFiles === true;
         if (this._selects && this._selects.closeAction) this._selects.closeAction.setValue(s.closeAction || 'ask', true);
+        if (this._selects && this._selects.pdfTocDepth) this._selects.pdfTocDepth.setValue(String(s.pdfTocMaxLevel || 6), true);
         if (this._selects && this._selects.imageInsertMode) this._selects.imageInsertMode.setValue(s.imageInsertMode || 'assets', true);
         if (this._selects && this._selects.imageAssetPathMode) this._selects.imageAssetPathMode.setValue(s.imageAssetPathMode || 'relative', true);
         // 框架界面字号滑块 + 预览/编辑字重滑块回填（silent，不触发 onChange 递归）
@@ -166,6 +190,7 @@
         if (efW) { efW.value = s.editorFontWeight; document.getElementById('editor-font-weight-label').textContent = s.editorFontWeight; }
         document.getElementById('settings-image-asset-path').value = s.imageAssetPath || 'assets';
         document.getElementById('set-clear-tabs-on-quit').checked = s.clearTabsOnQuit === true;
+        document.getElementById('set-pdf-toc-enabled').checked = s.pdfTocEnabled !== false;
         document.getElementById('set-custom-bg').checked = s.customBgEnabled === true;
         const cbg = document.getElementById('set-custom-bg-color');
         if (cbg) cbg.value = s.customBgColor || '#f8f7f4';
@@ -313,6 +338,8 @@
         });
         const ctoq = document.getElementById('set-clear-tabs-on-quit');
         if (ctoq) ctoq.addEventListener('change', (e) => { this.settings.clearTabsOnQuit = e.target.checked; });
+        const tocEnabled = document.getElementById('set-pdf-toc-enabled');
+        if (tocEnabled) tocEnabled.addEventListener('change', (e) => { this.settings.pdfTocEnabled = e.target.checked; });
         // 图片存储方式 / 路径：已从 radio 升级为自绘下拉（set-image-store-mode / set-image-asset-path-mode），
         // onChange 在 initSettings 里通过 Select 绑定到 this.settings.imageInsertMode / imageAssetPathMode。
   
@@ -474,6 +501,33 @@
             onChange: (v) => { this.settings.closeAction = v; },
           });
         }
+        // PDF 目录收录深度（导出纸面目录页时按层级过滤标题；选项标签 h1–hN 语言中性，无需翻译）
+        const tocHost = document.getElementById('set-pdf-toc-depth');
+        if (tocHost) {
+          this._selects.pdfTocDepth = new Select(tocHost, {
+            value: String(this.settings.pdfTocMaxLevel || 6),
+            t: this.t.bind(this),
+            ariaLabelKey: 'pdfTocDepth',
+            optionsProvider: () => ([3, 4, 5, 6].map((n) => ({ value: String(n), label: `h1–h${n}` }))),
+            onChange: (v) => { this.settings.pdfTocMaxLevel = Number(v); },
+          });
+        }
+        // 预览对齐模式（issue #90 justify → 四态 previewAlign，2026-11-20）
+        const alignHost = document.getElementById('set-preview-align');
+        if (alignHost) {
+          this._selects.previewAlign = new Select(alignHost, {
+            value: this.settings.previewAlign || 'default',
+            t: this.t.bind(this),
+            ariaLabelKey: 'previewAlign',
+            optionsProvider: (t) => ([
+              { value: 'default', label: t('alignDefault') },
+              { value: 'justify', label: t('alignJustify') },
+              { value: 'center', label: t('alignCenter') },
+              { value: 'right', label: t('alignRight') },
+            ]),
+            onChange: (v) => { this.settings.previewAlign = v; },
+          });
+        }
         // 图片存储方式 / 路径 —— 从 radio 组升级为自绘下拉，与默认视图/关闭窗口时保持视觉一致
         const imgModeHost = document.getElementById('set-image-store-mode');
         if (imgModeHost) {
@@ -551,6 +605,19 @@
         this.preview.classList.toggle('code-line-numbers', s.codeLineNumbers);
         this.preview.classList.toggle('code-wrap', s.codeWrap);
         this.preview.classList.toggle('code-no-scroll', s.codeScroll === false);
+        // 全局对齐模式（issue #90 justify → 2026-11-20 四态 previewAlign）：类挂两处——
+        //  body：命中实时预览 raw 行（.editor-container.wysiwyg-mode 作用域，源码模式
+        //        共用同一 CM 实例、无 mode 类不受影响）与 wysiwyg 遮罩（遮罩节点自带
+        //        preview-content 类）、live 导出（PDF print root / 长图 host 挂 body 下）
+        //  #preview：随导出 clone（preview.cloneNode 复制 class）进入导出文档，
+        //        HTML/系统打印路径嵌完整 styles.css，由 .preview-content[class*="preview-align-"]
+        //        后代规则命中；DOCX 路径用 closest('.preview-align-*') 判定
+        //  对齐值经 --preview-align 变量下发（见 styles.css「全局对齐模式」节），三态一条规则通吃
+        const alignCls = ['justify', 'center', 'right'].includes(s.previewAlign) ? 'preview-align-' + s.previewAlign : null;
+        for (const cls of ['preview-align-justify', 'preview-align-center', 'preview-align-right']) {
+          document.body.classList.toggle(cls, cls === alignCls);
+          this.preview.classList.toggle(cls, cls === alignCls);
+        }
         if (this._hljsCache) this._hljsCache.clear();
         await this.applyThemeMode();
         this.applyCustomBg();

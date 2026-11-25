@@ -101,9 +101,23 @@
           this.hideLoading();
         }
       },
+      // 会话键：主窗口固定键；分离编辑器窗口按 label 拆键（同源 localStorage 全窗口共享，
+      // 不拆则多窗口 saveSession 互相覆盖）。_detachedLabel 由 app.js boot 分离分支设置；
+      // 测试可直接注入。boot 参数与键口径见 multi-window.js / 设计文档定案 4。
+      sessionKey() {
+        // 单一来源：优先用 boot 注入的 _detachedLabel；缺失时解析一次 URL 并回填，
+        // 之后不再重复解析（避免两套来源长期并存漂移）。
+        if (!this._detachedLabel) {
+          const boot = (window.TMMultiWindow && window.TMMultiWindow.parseBootParams)
+            ? window.TMMultiWindow.parseBootParams(window.location.search)
+            : null;
+          if (boot && boot.detached) this._detachedLabel = boot.label;
+        }
+        return this._detachedLabel ? 'tizumark-session-' + this._detachedLabel : 'tizumark-session';
+      },
       loadSession() {
         try {
-          const raw = localStorage.getItem('tizumark-session');
+          const raw = localStorage.getItem(this.sessionKey());
           if (!raw) return null;
           const data = JSON.parse(raw);
           if (!data || data.version !== 2) return null;
@@ -135,8 +149,31 @@
             workspaceFolder: this.workspaceFolder || null,
             expandedFolders: this.expandedFolders ? Array.from(this.expandedFolders) : [],
           };
-          localStorage.setItem('tizumark-session', JSON.stringify(data));
+          localStorage.setItem(this.sessionKey(), JSON.stringify(data));
         } catch (e) { /* ignore */ }
+      },
+      // 分离窗口 boot：从交接负载重建 Tab（内容/未保存态已随迁，不读盘）。
+      // 口径对齐 restoreSession：kind 经 classifyFile 归一（防图片被当文本读）、
+      // 源窗口的加载失败态（_loadError）在此可见化；光标/滚动/预览滚动原样带回。
+      restoreDetachedTab(st) {
+        st = st || {};
+        const fallbackName = st.filePath ? st.filePath.split(/[/\\]/).pop() : `${this.t('untitled')}0`;
+        const tab = new Tab(st.name || fallbackName, st.content || '', st.filePath, st.kind || 'markdown');
+        if (tab.filePath && window.FileTypes && window.FileTypes.classifyFile) {
+          tab.kind = window.FileTypes.classifyFile(tab.filePath);
+        }
+        tab.savedContent = st.savedContent != null ? st.savedContent : (st.content || '');
+        tab.cursorPos = st.cursorPos || { line: 0, ch: 0 };
+        tab.scrollPos = st.scrollPos || { top: 0, left: 0 };
+        tab.previewScrollTop = st.previewScrollTop || 0;
+        tab.fileMeta = st.fileMeta || null;
+        tab.pendingExternalChange = !!st.pendingExternalChange;
+        tab._loaded = true; // 内容已随迁，不再读盘
+        tab._loadError = !!st._loadError;
+        if (tab._loadError && tab.filePath) {
+          this.reportError('E_NOT_FOUND', { context: { path: tab.filePath }, params: { name: tab.name }, error: new Error('handoff carried _loadError') });
+        }
+        return tab;
       },
       async restoreSession() {
         const session = this.loadSession();
@@ -270,9 +307,13 @@
           this.setStatus(this.t('formatUnsupported'));
           return;
         }
-        this._beginPaneLoad();
+        // loading 层按需挂（issue #74）：仅新开文件时显示，覆盖下方 readFileNormalized
+        // 的磁盘读取阶段；已存在的 tab 走 switchTab（其内部按需挂——已加载 tab 不闪，
+        // 无条件挂叠加 hidePaneLoading 的 180ms 最短显示 = 从文件树点开已打开文件必闪）
+        const existingIndex = this.tabs.findIndex(t => t.filePath === filePath);
+        const needsPaneLoad = existingIndex === -1;
+        if (needsPaneLoad) this._beginPaneLoad();
         try {
-          const existingIndex = this.tabs.findIndex(t => t.filePath === filePath);
           if (existingIndex !== -1) {
             await this.switchTab(existingIndex);
             this.revealOutlineForDoc(kind);
@@ -314,7 +355,7 @@
           // 打开失败：结构化错误码（E_NOT_FOUND/E_PERMISSION/...）或兜底 E_IO，用户可见 toast + 开发可见 console
           this.reportError(e.code || 'E_IO', { context: { path: filePath }, error: e, params: e.params, detail: e.detail });
         } finally {
-          this._endPaneLoad();
+          if (needsPaneLoad) this._endPaneLoad();
         }
       },
       // 打开 Markdown 文档后切到「大纲」标签页：文档主体打开即意味着用户要看结构。
@@ -327,6 +368,11 @@
       // 非 Markdown 明文文件：按扩展名选择 CodeMirror 语法高亮模式（仅高亮，不改变编辑行为）
       _applyCodeMode(ext) {
         if (!this.cm || typeof this.cm.setOption !== 'function') return;
+        // md/markdown 与未知扩展名兜底必须复用 editor-core 的基础配置（TMConst.MD_MODE_CFG，
+        // 含行内格式 token 中和 tokenTypeOverrides）——裸 'gfm' 字符串会把该配置整体覆盖丢失，
+        // **粗体** 等重新出现格式化外观（2026-11-15 真机实锤：打开 demo.md 后 token 回退）。
+        const MD_MODE_CFG = window.TMConst && window.TMConst.MD_MODE_CFG;
+        const mdMode = (MD_MODE_CFG && typeof MD_MODE_CFG === 'object') ? MD_MODE_CFG : 'gfm';
         const map = {
           js: 'javascript', mjs: 'javascript', cjs: 'javascript', jsx: 'javascript',
           ts: 'javascript', tsx: 'javascript',
@@ -338,10 +384,10 @@
           json: 'javascript',
           yml: 'yaml', yaml: 'yaml',
           sh: 'shell', bash: 'shell', zsh: 'shell',
-          md: 'gfm', markdown: 'gfm',
+          md: mdMode, markdown: mdMode,
         };
-        const mode = map[(ext || '').toLowerCase()] || 'gfm';
-        try { this.cm.setOption('mode', mode); } catch (e) { try { this.cm.setOption('mode', 'gfm'); } catch (_) {} }
+        const mode = map[(ext || '').toLowerCase()] || mdMode;
+        try { this.cm.setOption('mode', mode); } catch (e) { try { this.cm.setOption('mode', mdMode); } catch (_) {} }
       },
       async openFolder() {
         try {
@@ -1352,14 +1398,24 @@
         }
         this.highlightTreeActiveFile();
       },
+      // 路径比较统一口径：Windows 下大小写不敏感且 \ 与 / 都可作为分隔符，
+      // 直接用字符串相等判断会漏高亮（同一文件经不同入口打开时写法可能不同）。
+      _pathKey(p) {
+        return String(p == null ? '' : p)
+          .replace(/\\/g, '/')
+          .replace(/\/{2,}/g, '/')
+          .replace(/\/+$/, '')
+          .toLowerCase();
+      },
       highlightTreeActiveFile() {
         const treeEl = document.getElementById('folder-tree');
         if (!treeEl) return;
         const activePath = (this.activeTab && this.activeTab.filePath) ? this.activeTab.filePath : null;
         treeEl.querySelectorAll('.tree-row.active').forEach(el => el.classList.remove('active'));
         if (!activePath) return;
+        const activeKey = this._pathKey(activePath);
         treeEl.querySelectorAll('.tree-node.tree-file').forEach(node => {
-          if (node.dataset.path === activePath) {
+          if (this._pathKey(node.dataset.path) === activeKey) {
             const row = node.querySelector('.tree-row');
             if (row) row.classList.add('active');
           }
@@ -1375,11 +1431,10 @@
         return parent;
       },
       // 把「当前文件所在目录」自动作为文件树工作区（用户从未显式打开过文件夹时）。
-      // 只填树与状态，不展开文件夹栏——侧栏开合仍由用户控制。
+      // 只填树与状态，不切换/展开侧栏——标签页与开合仍由用户控制。
       async _adoptWorkspaceForFile(dir) {
         if (!dir) return;
-        const norm = (p) => String(p).replace(/\\/g, '/').replace(/\/+$/, '');
-        if (this.workspaceFolder && norm(dir) === norm(this.workspaceFolder)) return;
+        if (this.workspaceFolder && this._pathKey(dir) === this._pathKey(this.workspaceFolder)) return;
         this.workspaceFolder = dir;
         this.expandedFolders = new Set();
         this._autoWorkspaceForFiles = true;
@@ -1388,10 +1443,9 @@
         this.saveSession();
       },
       // 在文件树中定位当前（或指定）文件：按需逐层展开其祖先目录（懒加载与点击目录同一条路径），
-      // 高亮文件行并滚到可视区。
-      // 只操作树内部节点，**不展开左侧文件夹栏**——打开文件时侧栏的开合状态由用户设置决定；
-      // 面板收起时树仍会按需展开，等用户点把手打开时当前文件已经在位（layout._setPanelVisible 再滚一次）。
-      // 文件不在当前工作区内（对话框打开了别处文件等）时直接返回 false：树里没有它。
+      // 高亮文件行并滚到可视区。路径比较统一走 _pathKey（大小写/斜杠不敏感）。
+      // 只操作树内部节点，**不切换标签页、不展开侧栏**——打开文件时视图状态由用户设置决定；
+      // 文件不在当前工作区内（对话框打开了别处文件等）且工作区是用户显式选的，则返回 false。
       revealTreeFile(filePath = null) {
         const target = filePath || (this.activeTab && this.activeTab.filePath) || null;
         if (!target) return Promise.resolve(false);
@@ -1406,33 +1460,32 @@
         const treeEl = document.getElementById('folder-tree');
         if (!treeEl) return false;
         if (!target) return false;
-        const norm = (p) => String(p).replace(/\\/g, '/').replace(/\/+$/, '');
-        const targetN = norm(target);
-        if (!targetN) return false;
+        const targetKey = this._pathKey(target);
+        if (!targetKey) return false;
         const dir = this._dirOfFile(target);
 
         // 没有工作区（直接双击 / 最近文件 / 关联打开了一个文档）时，把该文件所在目录作为文件树根，
-        // 文件栏随即列出「当前文件夹下的所有文件」。只填树，不展开文件夹栏。
+        // 文件栏随即列出「当前文件夹下的所有文件」。只填树，不切标签、不展开侧栏。
         // 用户显式打开过的工作区不跟着当前文件切换（除非该工作区本身就是这样自动带出来的）。
-        let rootN = this.workspaceFolder ? norm(this.workspaceFolder) : '';
-        const inWorkspace = !!(rootN && targetN.startsWith(rootN + '/'));
-        if (!inWorkspace) {
+        let rootKey = this.workspaceFolder ? this._pathKey(this.workspaceFolder) : '';
+        let segs = this._relativeTreeSegments(target, this.workspaceFolder || '');
+        if (!segs) {
           if (!dir) return false;
-          if (rootN && !this._autoWorkspaceForFiles) return false;
+          if (rootKey && !this._autoWorkspaceForFiles) return false;
           await this._adoptWorkspaceForFile(dir);
-          rootN = norm(this.workspaceFolder || '');
-          if (!rootN || !targetN.startsWith(rootN + '/')) return false;
+          rootKey = this._pathKey(this.workspaceFolder || '');
+          segs = this._relativeTreeSegments(target, this.workspaceFolder || '');
+          if (!segs) return false;
         }
-        const parts = targetN.slice(rootN.length + 1).split('/').filter(Boolean);
-        if (!parts.length) return false;
+        if (!segs.length) return false;
 
-        // 自顶向下展开每一级祖先目录
+        // 自顶向下展开每一级祖先目录（最后一段是文件名）
         let container = treeEl;
-        let acc = rootN;
-        for (let i = 0; i < parts.length - 1; i++) {
-          acc += '/' + parts[i];
+        let currentKey = rootKey;
+        for (let i = 0; i < segs.length - 1; i++) {
+          const wantKey = currentKey + '/' + segs[i];
           const dirNode = Array.from(container.children).find(
-            (el) => el.classList && el.classList.contains('tree-folder') && norm(el.dataset.path) === acc
+            (el) => el.classList && el.classList.contains('tree-folder') && this._pathKey(el.dataset.path) === wantKey
           );
           if (!dirNode) return false; // 目录未渲染（被过滤/读取失败）：无从定位
           const children = dirNode.querySelector(':scope > .tree-children');
@@ -1451,13 +1504,14 @@
               await this.renderFolderLevel(dirNode.dataset.path, children, this._depthOf(dirNode));
             } catch (_) { return false; }
             // 期间切换了工作区：本轮结果已不属于当前树
-            if (norm(this.workspaceFolder || '') !== rootN) return false;
+            if (this._pathKey(this.workspaceFolder || '') !== rootKey) return false;
           }
           container = children;
+          currentKey = this._pathKey(dirNode.dataset.path);
         }
 
         const fileNode = Array.from(treeEl.querySelectorAll('.tree-node.tree-file')).find(
-          (el) => norm(el.dataset.path) === targetN
+          (el) => this._pathKey(el.dataset.path) === targetKey
         );
         if (!fileNode) return false;
         this.highlightTreeActiveFile();
@@ -1467,12 +1521,41 @@
         return true;
       },
       // 把文件树当前高亮行滚到可视区。面板收起时元素无布局，scrollIntoView 不会报错但也不生效，
-      // 因此 layout._setPanelVisible 会在展开文件夹栏后再调用一次。
+      // 因此切换到文件夹标签页时会再调用一次。
       scrollActiveTreeFileIntoView() {
         const row = document.querySelector('#folder-tree .tree-row.active');
         if (row && typeof row.scrollIntoView === 'function') {
           row.scrollIntoView({ block: 'nearest' });
         }
+      },
+      // filePath 相对 workspaceFolder 的路径分段；不在工作区内返回 null
+      _relativeTreeSegments(filePath, rootPath) {
+        const rootKey = this._pathKey(rootPath);
+        const fileKey = this._pathKey(filePath);
+        if (!rootKey || !fileKey || fileKey === rootKey) return null;
+        if (fileKey.indexOf(rootKey + '/') !== 0) return null;
+        return fileKey.slice(rootKey.length + 1).split('/').filter(Boolean);
+      },
+      // 「定位当前文档」：面板 header 的显式按钮。切到文件夹标签页，展开父级目录并高亮滚动；
+      // 树可能因外部增删而过期，失败时重建一次再试，仍失败则按原因提示。
+      async locateActiveFile() {
+        const filePath = (this.activeTab && this.activeTab.filePath) ? this.activeTab.filePath : null;
+        if (!filePath) {
+          this.showToast(this.t('locateNoActiveFile'));
+          return;
+        }
+        if (!this.workspaceFolder || !this._relativeTreeSegments(filePath, this.workspaceFolder)) {
+          this.showToast(this.t('locateNotInWorkspace'));
+          return;
+        }
+        if (this.settings.sidebarHidden) this.showSidebar();
+        this.switchSidebarTab('files', { persist: false });
+        let ok = await this.revealTreeFile(filePath);
+        if (!ok) {
+          await this.renderFolderTree();
+          ok = await this.revealTreeFile(filePath);
+        }
+        if (!ok) this.showToast(this.t('locateNotFound'));
       },
       async saveFile() {
         if (!this.activeTab) return;
